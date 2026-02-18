@@ -4,26 +4,31 @@ FROM ghcr.io/cirruslabs/flutter:stable AS build
 USER root
 WORKDIR /app
 
-# Disable analytics and enable web
+# Ensure web is enabled and get deps
 RUN flutter config --no-analytics && \
-    flutter config --enable-web
+    flutter config --enable-web && \
+    flutter doctor
 
-# Copy pubspec first for better caching
+# Copy pubspec first
 COPY pubspec.yaml .
 RUN flutter pub get
 
-# Copy the rest of the files
+# Copy assets and code
 COPY . .
+
+# Precache web artifacts
+RUN flutter precache --web
 
 # Build arguments for Supabase
 ARG SUPABASE_URL
 ARG SUPABASE_ANON_KEY
 
-# Build Flutter Web with verbose output
+# Build Flutter Web
+# Using quotes and ensuring variables are passed correctly
 RUN flutter build web \
-    --dart-define=SUPABASE_URL="$SUPABASE_URL" \
-    --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
-    --release -v
+    --dart-define=SUPABASE_URL=${SUPABASE_URL} \
+    --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY} \
+    --release
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
