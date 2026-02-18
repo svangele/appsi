@@ -1,7 +1,6 @@
 # Stage 1: Build Flutter Web
 FROM ghcr.io/cirruslabs/flutter:stable AS build
 
-USER root
 WORKDIR /app
 
 # Enable web and show doctor info
@@ -18,13 +17,12 @@ COPY . .
 
 # Build arguments (renamed to avoid security lints)
 ARG SB_URL
-ARG SB_KEY
+ARG SB_TOKEN
 
 # Build Flutter Web
-# The result will be in build/web
 RUN flutter build web \
     --dart-define=SB_URL=${SB_URL} \
-    --dart-define=SB_KEY=${SB_KEY} \
+    --dart-define=SB_TOKEN=${SB_TOKEN} \
     --release
 
 # Stage 2: Serve with Nginx

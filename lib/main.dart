@@ -5,7 +5,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   const supabaseUrl = String.fromEnvironment('SB_URL');
-  const supabaseAnonKey = String.fromEnvironment('SB_KEY');
+  const supabaseAnonKey = String.fromEnvironment('SB_TOKEN');
 
   bool isConfigured = supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
 
@@ -116,7 +116,7 @@ class _UserFormPageState extends State<UserFormPage> {
       ),
       body: Center(
         child: Container(
-          maxWidth: 500,
+          constraints: const BoxConstraints(maxWidth: 500),
           padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
