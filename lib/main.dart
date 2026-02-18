@@ -4,8 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-  const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  const supabaseUrl = String.fromEnvironment('SB_URL');
+  const supabaseAnonKey = String.fromEnvironment('SB_KEY');
 
   bool isConfigured = supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
 

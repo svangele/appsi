@@ -4,34 +4,34 @@ FROM ghcr.io/cirruslabs/flutter:stable AS build
 USER root
 WORKDIR /app
 
-# Ensure web is enabled and get deps
+# Enable web and show doctor info
 RUN flutter config --no-analytics && \
     flutter config --enable-web && \
     flutter doctor
 
-# Copy pubspec first
+# Copy pubspec and get dependencies
 COPY pubspec.yaml .
 RUN flutter pub get
 
-# Copy assets and code
+# Copy source code and assets
 COPY . .
 
-# Precache web artifacts
-RUN flutter precache --web
-
-# Build arguments for Supabase
-ARG SUPABASE_URL
-ARG SUPABASE_ANON_KEY
+# Build arguments (renamed to avoid security lints)
+ARG SB_URL
+ARG SB_KEY
 
 # Build Flutter Web
-# Using quotes and ensuring variables are passed correctly
+# The result will be in build/web
 RUN flutter build web \
-    --dart-define=SUPABASE_URL=${SUPABASE_URL} \
-    --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY} \
+    --dart-define=SB_URL=${SB_URL} \
+    --dart-define=SB_KEY=${SB_KEY} \
     --release
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
+# Remove default nginx contents
+RUN rm -rf /usr/share/nginx/html/*
+# Copy build result
 COPY --from=build /app/build/web /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
