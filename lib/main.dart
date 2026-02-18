@@ -9,11 +9,17 @@ void main() async {
 
   bool isConfigured = supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
 
+  // Debug logs for environment variables
+  debugPrint('Debug: SB_URL length: ${supabaseUrl.length}');
+  debugPrint('Debug: SB_TOKEN length: ${supabaseAnonKey.length}');
   if (isConfigured) {
+    debugPrint('Debug: SB_URL starts with: ${supabaseUrl.substring(0, supabaseUrl.length > 20 ? 20 : supabaseUrl.length)}');
     await Supabase.initialize(
       url: supabaseUrl,
       anonKey: supabaseAnonKey,
     );
+  } else {
+    debugPrint('Debug: Environment variables are EMPTY');
   }
 
   runApp(MyApp(isConfigured: isConfigured));
