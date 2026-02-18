@@ -7,45 +7,50 @@ void main() async {
   const supabaseUrl = String.fromEnvironment('SB_URL');
   const supabaseAnonKey = String.fromEnvironment('SB_TOKEN');
 
-  bool isConfigured = supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
+  bool isSupabaseReady = false;
+  String? initError;
 
-  // Debug logs for environment variables
-  debugPrint('Debug: SB_URL length: ${supabaseUrl.length}');
-  debugPrint('Debug: SB_TOKEN length: ${supabaseAnonKey.length}');
-  if (isConfigured) {
-    debugPrint('Debug: SB_URL starts with: ${supabaseUrl.substring(0, supabaseUrl.length > 20 ? 20 : supabaseUrl.length)}');
-    await Supabase.initialize(
-      url: supabaseUrl,
-      anonKey: supabaseAnonKey,
-    );
+  if (supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty) {
+    try {
+      await Supabase.initialize(
+        url: supabaseUrl,
+        anonKey: supabaseAnonKey,
+      );
+      isSupabaseReady = true;
+    } catch (e) {
+      initError = e.toString();
+      debugPrint('Error inicializando Supabase: $e');
+    }
   } else {
-    debugPrint('Debug: Environment variables are EMPTY');
+    initError = 'Variables SB_URL o SB_TOKEN no encontradas en el build.';
   }
 
-  runApp(MyApp(isConfigured: isConfigured));
+  runApp(MyApp(isSupabaseReady: isSupabaseReady, initError: initError));
 }
 
 class MyApp extends StatelessWidget {
-  final bool isConfigured;
-  const MyApp({super.key, required this.isConfigured});
+  final bool isSupabaseReady;
+  final String? initError;
+  const MyApp({super.key, required this.isSupabaseReady, this.initError});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Supabase App',
+      title: 'App Sisol',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: UserFormPage(isConfigured: isConfigured),
+      home: UserFormPage(isSupabaseReady: isSupabaseReady, initError: initError),
     );
   }
 }
 
 class UserFormPage extends StatefulWidget {
-  final bool isConfigured;
-  const UserFormPage({super.key, required this.isConfigured});
+  final bool isSupabaseReady;
+  final String? initError;
+  const UserFormPage({super.key, required this.isSupabaseReady, this.initError});
 
   @override
   State<UserFormPage> createState() => _UserFormPageState();
@@ -58,11 +63,12 @@ class _UserFormPageState extends State<UserFormPage> {
   bool _isLoading = false;
 
   Future<void> _insertUser() async {
-    if (!widget.isConfigured) {
+    if (!widget.isSupabaseReady) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error: Las variables de entorno no están configuradas en el build.'),
+        SnackBar(
+          content: Text('Error: Supabase no está inicializado. ${widget.initError ?? ""}'),
           backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 5),
         ),
       );
       return;
@@ -129,20 +135,28 @@ class _UserFormPageState extends State<UserFormPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (!widget.isConfigured)
+                if (!widget.isSupabaseReady)
                   Container(
-                    padding: const EdgeInsets.all(8),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    color: Colors.red.shade100,
-                    child: const Row(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 24),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Column(
                       children: [
-                        Icon(Icons.warning, color: Colors.red),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'ATENCIÓN: SUPABASE_URL o SUPABASE_ANON_KEY no detectadas en el build.',
-                            style: TextStyle(color: Colors.red, fontSize: 12),
-                          ),
+                        const Row(
+                          children: [
+                            Icon(Icons.error_outline, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Error de Configuración', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.initError ?? 'Error desconocido al inicializar.',
+                          style: const TextStyle(color: Colors.red, fontSize: 13),
                         ),
                       ],
                     ),
