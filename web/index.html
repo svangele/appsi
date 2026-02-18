@@ -7,10 +7,11 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project for Supabase and Dokploy.">
 
-  <!-- iOS meta tags & icons -->
+  <!-- Meta tags for PWA -->
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="appsi">
+  <meta name="apple-mobile-web-app-title" content="App Sisol">
 
   <title>App Sisol</title>
   <link rel="manifest" href="manifest.json">
@@ -19,9 +20,13 @@
 <body>
   <div id="loading"
     style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif;">
-    <p>Cargando aplicación...</p>
-  </div>
-  <script src="flutter_bootstrap.js" async></script>
+    <script>
+      console.log("Página cargada. Iniciando bootstrap de Flutter...");
+      window.addEventListener('load', function () {
+        console.log("Carga de ventana completa.");
+      });
+    </script>
+    <script src="flutter_bootstrap.js" async></script>
 </body>
 
 </html>
