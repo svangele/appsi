@@ -123,7 +123,7 @@ class _UserFormPageState extends State<UserFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Registro de Usuario'),
+        title: const Text('Registro de Usuario (v1.0.4)'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Center(
