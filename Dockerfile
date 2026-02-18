@@ -1,32 +1,32 @@
 # Stage 1: Build Flutter Web
 FROM ghcr.io/cirruslabs/flutter:stable AS build
 
-# Set work directory
+USER root
 WORKDIR /app
 
-# Copy project files
-COPY . .
+# Disable analytics and enable web
+RUN flutter config --no-analytics && \
+    flutter config --enable-web
 
-# Fetch dependencies
+# Copy pubspec first for better caching
+COPY pubspec.yaml .
 RUN flutter pub get
+
+# Copy the rest of the files
+COPY . .
 
 # Build arguments for Supabase
 ARG SUPABASE_URL
 ARG SUPABASE_ANON_KEY
 
-# Build Flutter Web
+# Build Flutter Web with verbose output
 RUN flutter build web \
-    --dart-define=SUPABASE_URL=$SUPABASE_URL \
-    --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
-    --release
+    --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+    --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
+    --release -v
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
-
-# Copy build files from stage 1
 COPY --from=build /app/build/web /usr/share/nginx/html
-
-# Expose port 80
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]
