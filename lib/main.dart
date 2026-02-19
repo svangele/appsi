@@ -11,14 +11,10 @@ void main() async {
   const supabaseAnonKey = String.fromEnvironment('SB_TOKEN');
 
   if (supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty) {
-    debugPrint('Supabase: Config detectada. URL: $supabaseUrl');
-    debugPrint('Supabase: Token detectado (inicio/fin): ${supabaseAnonKey.substring(0, 5)}...${supabaseAnonKey.substring(supabaseAnonKey.length - 5)}');
     await Supabase.initialize(
       url: supabaseUrl,
       anonKey: supabaseAnonKey,
     );
-  } else {
-    debugPrint('Supabase: ERROR - Variables SB_URL o SB_TOKEN están VACÍAS');
   }
 
   runApp(const MyApp());
