@@ -80,19 +80,12 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.lock_outline,
-                    size: 64,
-                    color: theme.colorScheme.primary,
+                  Image.asset(
+                    'assets/logo.png',
+                    height: 80,
+                    fit: BoxFit.contain,
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Bienvenido',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
+                  const SizedBox(height: 24),
                   const SizedBox(height: 8),
                   Text(
                     'Inicia sesión para continuar',
