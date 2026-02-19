@@ -76,8 +76,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void _showUserForm({Map<String, dynamic>? user}) {
     final isEditing = user != null;
     final nameController = TextEditingController(text: user?['full_name']);
-    final emailController = TextEditingController(); // Only for creation
-    final passwordController = TextEditingController(); // Only for creation
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
     String role = user?['role'] ?? 'usuario';
 
     showDialog(
@@ -131,16 +131,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       'role': role,
                     }).eq('id', user['id']);
                   } else {
-                    // Note: This creates an Auth user. 
-                    // Warning: Supabase client signup might auto-login or require email confirm.
                     await Supabase.instance.client.auth.signUp(
                       email: emailController.text.trim(),
                       password: passwordController.text.trim(),
                       data: {'full_name': nameController.text.trim()},
                     );
-                    // After signup, the trigger handles the profile creation.
-                    // We might need to manually update the role if the default is 'usuario'
-                    // but we can't easily get the new ID here without session management.
                   }
                   if (mounted) {
                     Navigator.pop(context);
@@ -173,15 +168,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Administración de Usuarios'),
-        actions: [
-          IconButton(
-            onPressed: () => Supabase.instance.client.auth.signOut(),
-            icon: const Icon(Icons.logout_rounded),
-          )
-        ],
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showUserForm(),
         backgroundColor: theme.colorScheme.secondary,

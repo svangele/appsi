@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'main_navigation.dart';
 import 'login_page.dart';
-import 'admin_dashboard.dart';
-import 'user_dashboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -122,6 +121,7 @@ class _AuthRouterState extends State<AuthRouter> {
     } catch (e) {
       debugPrint('Error obteniendo rol: $e');
       if (mounted) {
+        setState(() => _role = 'usuario'); // Role fallback
         setState(() => _isLoading = false);
       }
     }
@@ -137,10 +137,7 @@ class _AuthRouterState extends State<AuthRouter> {
       return const LoginPage();
     }
 
-    if (_role == 'admin') {
-      return const AdminDashboard();
-    }
-
-    return const UserDashboard();
+    // Now everything returns MainNavigation, it handles the logic internall
+    return MainNavigation(role: _role ?? 'usuario');
   }
 }
