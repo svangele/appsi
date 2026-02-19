@@ -11,9 +11,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _nameController = TextEditingController();
   bool _isLoading = false;
-  bool _isSignUp = false;
 
   Future<void> _authenticate() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
@@ -25,27 +23,10 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _isLoading = true);
     try {
-      if (_isSignUp) {
-        await Supabase.instance.client.auth.signUp(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-          data: {'full_name': _nameController.text.trim()},
-        );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Registro exitoso. Ya puedes iniciar sesión.'),
-              backgroundColor: Color(0xFFB1CB34),
-            ),
-          );
-          setState(() => _isSignUp = false);
-        }
-      } else {
-        await Supabase.instance.client.auth.signInWithPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-      }
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
     } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -100,13 +81,13 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    _isSignUp ? Icons.person_add_outlined : Icons.lock_outline,
+                    Icons.lock_outline,
                     size: 64,
                     color: theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    _isSignUp ? 'Crear una cuenta' : 'Bienvenido',
+                    'Bienvenido',
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.primary,
@@ -114,21 +95,10 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _isSignUp 
-                      ? 'Regístrate para comenzar' 
-                      : 'Inicia sesión para continuar',
+                    'Inicia sesión para continuar',
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 32),
-                  if (_isSignUp)
-                    TextField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre Completo',
-                        prefixIcon: Icon(Icons.person),
-                      ),
-                    ),
-                  if (_isSignUp) const SizedBox(height: 16),
                   TextField(
                     controller: _emailController,
                     decoration: const InputDecoration(
@@ -151,30 +121,21 @@ class _LoginPageState extends State<LoginPage> {
                       ? const CircularProgressIndicator()
                       : ElevatedButton(
                           onPressed: _authenticate,
-                          child: Text(
-                            _isSignUp ? 'REGISTRARME' : 'INICIAR SESIÓN',
-                            style: const TextStyle(
+                          child: const Text(
+                            'INICIAR SESIÓN',
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.2,
                             ),
                           ),
                         ),
                   const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () => setState(() {
-                      _isSignUp = !_isSignUp;
-                      _nameController.clear();
-                      _emailController.clear();
-                      _passwordController.clear();
-                    }),
-                    child: Text(
-                      _isSignUp 
-                        ? '¿Ya tienes cuenta? Inicia sesión' 
-                        : '¿No tienes cuenta? Regístrate gratis',
-                      style: TextStyle(
-                        color: theme.colorScheme.tertiary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  const Text(
+                    'Acceso restringido a personal autorizado.',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
                     ),
                   ),
                 ],
@@ -190,7 +151,6 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _nameController.dispose();
     super.dispose();
   }
 }

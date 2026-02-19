@@ -37,6 +37,137 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
+  Future<void> _deleteUser(String id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Usuario'),
+        content: const Text('¿Estás seguro de que deseas eliminar este perfil? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCELAR')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('ELIMINAR'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await Supabase.instance.client.from('profiles').delete().eq('id', id);
+        _fetchUsers();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Perfil eliminado correctamente')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al eliminar: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+  }
+
+  void _showUserForm({Map<String, dynamic>? user}) {
+    final isEditing = user != null;
+    final nameController = TextEditingController(text: user?['full_name']);
+    final emailController = TextEditingController(); // Only for creation
+    final passwordController = TextEditingController(); // Only for creation
+    String role = user?['role'] ?? 'usuario';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(isEditing ? 'Editar Usuario' : 'Crear Nuevo Usuario'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!isEditing) ...[
+                  TextField(
+                    controller: emailController,
+                    decoration: const InputDecoration(labelText: 'Correo Electrónico', prefixIcon: Icon(Icons.email)),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: passwordController,
+                    decoration: const InputDecoration(labelText: 'Contraseña', prefixIcon: Icon(Icons.lock)),
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Nombre Completo', prefixIcon: Icon(Icons.person)),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: role,
+                  decoration: const InputDecoration(labelText: 'Rol del Sistema', prefixIcon: Icon(Icons.admin_panel_settings)),
+                  items: const [
+                    DropdownMenuItem(value: 'usuario', child: Text('Usuario')),
+                    DropdownMenuItem(value: 'admin', child: Text('Administrador')),
+                  ],
+                  onChanged: (val) => setDialogState(() => role = val!),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCELAR')),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  if (isEditing) {
+                    await Supabase.instance.client.from('profiles').update({
+                      'full_name': nameController.text.trim(),
+                      'role': role,
+                    }).eq('id', user['id']);
+                  } else {
+                    // Note: This creates an Auth user. 
+                    // Warning: Supabase client signup might auto-login or require email confirm.
+                    await Supabase.instance.client.auth.signUp(
+                      email: emailController.text.trim(),
+                      password: passwordController.text.trim(),
+                      data: {'full_name': nameController.text.trim()},
+                    );
+                    // After signup, the trigger handles the profile creation.
+                    // We might need to manually update the role if the default is 'usuario'
+                    // but we can't easily get the new ID here without session management.
+                  }
+                  if (mounted) {
+                    Navigator.pop(context);
+                    _fetchUsers();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(isEditing ? 'Usuario actualizado' : 'Usuario creado (vía registro)'),
+                        backgroundColor: const Color(0xFFB1CB34),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                    );
+                  }
+                }
+              },
+              child: Text(isEditing ? 'GUARDAR' : 'CREAR'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -50,6 +181,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
             icon: const Icon(Icons.logout_rounded),
           )
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showUserForm(),
+        backgroundColor: theme.colorScheme.secondary,
+        icon: const Icon(Icons.person_add),
+        label: const Text('NUEVO USUARIO'),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -71,7 +208,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Gestiona los perfiles y roles de acceso del sistema',
+                        'Total: ${_users.length} usuarios registrados',
                         style: TextStyle(color: Colors.grey[600]),
                       ),
                     ],
@@ -134,19 +271,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    user['created_at'].toString().split('T')[0],
-                                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                                  ),
                                 ],
                               ),
                             ),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.chevron_right_rounded),
-                              onPressed: () {
-                                // Futura implementación de edición
-                              },
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined, color: Colors.blueGrey),
+                                  onPressed: () => _showUserForm(user: user),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                                  onPressed: () => _deleteUser(user['id']),
+                                ),
+                              ],
                             ),
                           ),
                         );
