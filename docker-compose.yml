@@ -5,8 +5,8 @@ services:
     build:
       context: .
       args:
-        - SUPABASE_URL=${SUPABASE_URL}
-        - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+        - SB_URL=${SB_URL}
+        - SB_TOKEN=${SB_TOKEN}
     ports:
       - "8080:80"
     restart: always
