@@ -131,6 +131,22 @@ class _UserDashboardState extends State<UserDashboard> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: OutlinedButton.icon(
+                    onPressed: () => Supabase.instance.client.auth.signOut(),
+                    icon: const Icon(Icons.logout_rounded),
+                    label: const Text('CERRAR SESIÓN'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.redAccent,
+                      side: const BorderSide(color: Colors.redAccent),
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 40),
               ],
             ),
           );

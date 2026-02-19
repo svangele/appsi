@@ -1,20 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class SystemLogsPage extends StatelessWidget {
+class SystemLogsPage extends StatefulWidget {
   const SystemLogsPage({super.key});
+
+  @override
+  State<SystemLogsPage> createState() => _SystemLogsPageState();
+}
+
+class _SystemLogsPageState extends State<SystemLogsPage> {
+  List<Map<String, dynamic>> _logs = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLogs();
+  }
+
+  Future<void> _fetchLogs() async {
+    setState(() => _isLoading = true);
+    try {
+      final data = await Supabase.instance.client
+          .from('system_logs')
+          .select()
+          .order('created_at', ascending: false)
+          .limit(50);
+      
+      setState(() {
+        _logs = List<Map<String, dynamic>>.from(data);
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error fetching logs: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    // Lista de ejemplo para simular logs
-    final logs = [
-      {'action': 'Login exitoso', 'user': 'admin@sisol.red', 'time': 'Hace 2 min'},
-      {'action': 'Usuario creado', 'user': 'admin@sisol.red', 'time': 'Hace 15 min'},
-      {'action': 'Error de conexión', 'user': 'System', 'time': 'Hace 1 hora'},
-      {'action': 'Perfil actualizado', 'user': 'usuario@test.com', 'time': 'Hace 3 horas'},
-    ];
-
     return Column(
       children: [
         Container(
@@ -33,38 +61,79 @@ class SystemLogsPage extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Historial de actividad y eventos críticos',
+                'Actividad real capturada desde la base de datos',
                 style: TextStyle(color: Colors.grey[600]),
               ),
             ],
           ),
         ),
         Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: logs.length,
-            separatorBuilder: (context, index) => const Divider(),
-            itemBuilder: (context, index) {
-              final log = logs[index];
-              return ListTile(
-                leading: Icon(
-                  Icons.history_toggle_off,
-                  color: theme.colorScheme.secondary,
+          child: _isLoading 
+            ? const Center(child: CircularProgressIndicator())
+            : _logs.isEmpty 
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.history_toggle_off, size: 64, color: Colors.grey[300]),
+                      const SizedBox(height: 16),
+                      Text('No hay logs registrados aún', style: TextStyle(color: Colors.grey[500])),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _fetchLogs,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _logs.length,
+                    separatorBuilder: (context, index) => const Divider(),
+                    itemBuilder: (context, index) {
+                      final log = _logs[index];
+                      final action = log['action_type'] ?? 'ACCIÓN';
+                      final target = log['target_info'] ?? '---';
+                      final date = DateTime.parse(log['created_at']).toLocal();
+                      
+                      return ListTile(
+                        leading: _getIconForAction(action, theme),
+                        title: Text(
+                          action,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        subtitle: Text(
+                          target,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        trailing: Text(
+                          _formatTime(date),
+                          style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-                title: Text(
-                  log['action']!,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: Text('Usuario: ${log['user']}'),
-                trailing: Text(
-                  log['time']!,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                ),
-              );
-            },
-          ),
         ),
       ],
     );
+  }
+
+  Icon _getIconForAction(String action, ThemeData theme) {
+    switch (action) {
+      case 'CREACIÓN':
+        return Icon(Icons.person_add_alt_1, color: theme.colorScheme.secondary);
+      case 'ELIMINACIÓN':
+        return const Icon(Icons.person_remove_alt_1, color: Colors.redAccent);
+      case 'REGISTRO':
+        return Icon(Icons.app_registration, color: theme.colorScheme.primary);
+      default:
+        return const Icon(Icons.history, color: Colors.blueGrey);
+    }
+  }
+
+  String _formatTime(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    if (diff.inHours < 24) return '${diff.inHours}h';
+    return '${date.day}/${date.month}';
   }
 }

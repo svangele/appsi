@@ -36,13 +36,6 @@ class _MainNavigationState extends State<MainNavigation> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_getAppBarTitle()),
-        actions: [
-          IconButton(
-            onPressed: () => Supabase.instance.client.auth.signOut(),
-            icon: const Icon(Icons.logout_rounded),
-            tooltip: 'Cerrar Sesión',
-          )
-        ],
       ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
