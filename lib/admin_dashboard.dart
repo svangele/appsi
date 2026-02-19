@@ -56,11 +56,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     if (confirmed == true) {
       try {
-        await Supabase.instance.client.from('profiles').delete().eq('id', id);
+        await Supabase.instance.client.rpc('delete_user_admin', params: {'user_id': id});
         _fetchUsers();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Perfil eliminado correctamente')),
+            const SnackBar(content: Text('Usuario y perfil eliminados correctamente')),
           );
         }
       } catch (e) {
@@ -131,18 +131,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       'role': role,
                     }).eq('id', user['id']);
                   } else {
-                    await Supabase.instance.client.auth.signUp(
-                      email: emailController.text.trim(),
-                      password: passwordController.text.trim(),
-                      data: {'full_name': nameController.text.trim()},
-                    );
+                    await Supabase.instance.client.rpc('create_user_admin', params: {
+                      'email': emailController.text.trim(),
+                      'password': passwordController.text.trim(),
+                      'full_name': nameController.text.trim(),
+                      'user_role': role,
+                    });
                   }
                   if (mounted) {
                     Navigator.pop(context);
                     _fetchUsers();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(isEditing ? 'Usuario actualizado' : 'Usuario creado (vía registro)'),
+                        content: Text(isEditing ? 'Usuario actualizado' : 'Usuario creado con éxito'),
                         backgroundColor: const Color(0xFFB1CB34),
                       ),
                     );
