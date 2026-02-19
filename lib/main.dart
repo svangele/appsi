@@ -19,10 +19,9 @@ void main() async {
       isSupabaseReady = true;
     } catch (e) {
       initError = e.toString();
-      debugPrint('Error inicializando Supabase: $e');
     }
   } else {
-    initError = 'Variables SB_URL o SB_TOKEN no encontradas en el build.';
+    initError = 'Variables SB_URL o SB_TOKEN no encontradas.';
   }
 
   runApp(MyApp(isSupabaseReady: isSupabaseReady, initError: initError));
@@ -123,7 +122,7 @@ class _UserFormPageState extends State<UserFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Registro de Usuario (v1.0.4)'),
+        title: const Text('Registro de Usuario'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Center(
