@@ -26,8 +26,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
     try {
       var query = Supabase.instance.client
           .from('system_logs')
-          .select()
-          .order('created_at', ascending: false);
+          .select();
 
       if (_startDate != null) {
         query = query.gte('created_at', _startDate!.toIso8601String());
@@ -38,7 +37,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
         query = query.lte('created_at', end.toIso8601String());
       }
 
-      final data = await query.limit(100);
+      final data = await query.order('created_at', ascending: false).limit(100);
 
       
       setState(() {
