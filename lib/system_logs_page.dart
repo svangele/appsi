@@ -11,6 +11,9 @@ class SystemLogsPage extends StatefulWidget {
 class _SystemLogsPageState extends State<SystemLogsPage> {
   List<Map<String, dynamic>> _logs = [];
   bool _isLoading = true;
+  DateTime? _startDate;
+  DateTime? _endDate;
+
 
   @override
   void initState() {
@@ -21,11 +24,22 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
   Future<void> _fetchLogs() async {
     setState(() => _isLoading = true);
     try {
-      final data = await Supabase.instance.client
+      var query = Supabase.instance.client
           .from('system_logs')
           .select()
-          .order('created_at', ascending: false)
-          .limit(50);
+          .order('created_at', ascending: false);
+
+      if (_startDate != null) {
+        query = query.gte('created_at', _startDate!.toIso8601String());
+      }
+      if (_endDate != null) {
+        // Add 23:59:59 to include the whole end day if using only dates
+        final end = DateTime(_endDate!.year, _endDate!.month, _endDate!.day, 23, 59, 59);
+        query = query.lte('created_at', end.toIso8601String());
+      }
+
+      final data = await query.limit(100);
+
       
       setState(() {
         _logs = List<Map<String, dynamic>>.from(data);
@@ -48,7 +62,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(24),
-          color: theme.colorScheme.primary.withValues(alpha: 0.05),
+          color: theme.colorScheme.primary.withOpacity(0.05),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -64,6 +78,67 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
                 'Actividad real capturada desde la base de datos',
                 style: TextStyle(color: Colors.grey[600]),
               ),
+              const SizedBox(height: 16),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildDateSelector(
+                      label: _startDate == null ? 'Desde' : _formatDateOnly(_startDate!),
+                      icon: Icons.calendar_today,
+                      onTap: () async {
+                        final d = await showDatePicker(
+                          context: context,
+                          initialDate: _startDate ?? DateTime.now(),
+                          firstDate: DateTime(2024),
+                          lastDate: DateTime.now(),
+                        );
+                        if (d != null) {
+                          setState(() => _startDate = d);
+                          _fetchLogs();
+                        }
+                      },
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Icon(Icons.arrow_forward, size: 16, color: Colors.grey),
+                    ),
+                    _buildDateSelector(
+                      label: _endDate == null ? 'Hasta' : _formatDateOnly(_endDate!),
+                      icon: Icons.event,
+                      onTap: () async {
+                        final d = await showDatePicker(
+                          context: context,
+                          initialDate: _endDate ?? DateTime.now(),
+                          firstDate: _startDate ?? DateTime(2024),
+                          lastDate: DateTime.now(),
+                        );
+                        if (d != null) {
+                          setState(() => _endDate = d);
+                          _fetchLogs();
+                        }
+                      },
+                    ),
+                    if (_startDate != null || _endDate != null)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _startDate = null;
+                              _endDate = null;
+                            });
+                            _fetchLogs();
+                          },
+                          icon: const Icon(Icons.clear_all, size: 18),
+                          label: const Text('Limpiar'),
+                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
             ],
           ),
         ),
@@ -135,5 +210,32 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
     final hour = date.hour.toString().padLeft(2, '0');
     final minute = date.minute.toString().padLeft(2, '0');
     return '$day/$month/${date.year} $hour:$minute';
+  }
+
+  String _formatDateOnly(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  Widget _buildDateSelector({required String label, required IconData icon, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: const Color(0xFF344092)),
+            const SizedBox(width: 8),
+            Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
   }
 }
