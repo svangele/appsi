@@ -10,6 +10,7 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   List<Map<String, dynamic>> _users = [];
+  List<Map<String, dynamic>> _collaborators = [];
   bool _isLoading = true;
   final _searchController = TextEditingController();
   String _searchQuery = '';
@@ -18,6 +19,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void initState() {
     super.initState();
     _fetchUsers();
+    _fetchCollaborators();
+  }
+
+  Future<void> _fetchCollaborators() async {
+    try {
+      final data = await Supabase.instance.client
+          .from('cssi_contributors')
+          .select('id, nombre, paterno, materno, numero_empleado')
+          .order('nombre');
+      setState(() => _collaborators = List<Map<String, dynamic>>.from(data));
+    } catch (e) {
+      debugPrint('Error fetching collaborators: $e');
+    }
   }
 
   Future<void> _fetchUsers() async {
@@ -116,9 +130,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void _showUserForm({Map<String, dynamic>? user}) {
     final isEditing = user != null;
     final nameController = TextEditingController(text: user?['full_name']);
+    final employeeNumberController = TextEditingController(text: user?['numero_empleado']);
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
     String role = user?['role'] ?? 'usuario';
+    String? selectedCssiId = user?['cssi_id'];
 
     showDialog(
       context: context,
@@ -168,6 +184,45 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       decoration: const InputDecoration(labelText: 'Nombre Completo', prefixIcon: Icon(Icons.person)),
                     ),
                     const SizedBox(height: 16),
+                    TextField(
+                      controller: employeeNumberController,
+                      decoration: const InputDecoration(labelText: 'Número de Empleado', prefixIcon: Icon(Icons.badge_outlined)),
+                      readOnly: true, // Only filled via collaborator selection
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String?>(
+                      value: selectedCssiId,
+                      decoration: const InputDecoration(
+                        labelText: 'Vincular con Colaborador CSSI (Opcional)',
+                        prefixIcon: Icon(Icons.link),
+                      ),
+                      isExpanded: true,
+                      items: [
+                        const DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text('Ninguno / Externo'),
+                        ),
+                        ..._collaborators.map((colab) {
+                          final fullName = '${colab['nombre']} ${colab['paterno']}';
+                          final numEmp = colab['numero_empleado'] ?? 'N/A';
+                          return DropdownMenuItem<String?>(
+                            value: colab['id'],
+                            child: Text('$numEmp | $fullName'),
+                          );
+                        }),
+                      ],
+                      onChanged: (val) {
+                        setDialogState(() {
+                          selectedCssiId = val;
+                          if (val != null) {
+                            final colab = _collaborators.firstWhere((c) => c['id'] == val);
+                            nameController.text = '${colab['nombre']} ${colab['paterno']} ${colab['materno'] ?? ''}'.trim().toUpperCase();
+                            employeeNumberController.text = colab['numero_empleado'] ?? '';
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       value: role,
                       decoration: const InputDecoration(labelText: 'Rol del Sistema', prefixIcon: Icon(Icons.admin_panel_settings)),
@@ -210,14 +265,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   await Supabase.instance.client.from('profiles').update({
                                     'full_name': nameController.text.trim(),
                                     'role': role,
+                                    'cssi_id': selectedCssiId,
+                                    'numero_empleado': employeeNumberController.text.trim(),
                                   }).eq('id', user['id']);
                                 } else {
-                                  await Supabase.instance.client.rpc('create_user_admin', params: {
+                                  // 1. Create the user via RPC
+                                  final response = await Supabase.instance.client.rpc('create_user_admin', params: {
                                     'email': emailController.text.trim(),
                                     'password': passwordController.text.trim(),
                                     'full_name': nameController.text.trim(),
                                     'user_role': role,
                                   });
+
+                                  // 2. If we have a CSSI link, we need to update the newly created profile
+                                  // The RPC should return the user ID. If not, we'll have to find it.
+                                  if (selectedCssiId != null) {
+                                    final userId = response as String?;
+                                    if (userId != null) {
+                                      await Supabase.instance.client.from('profiles').update({
+                                        'cssi_id': selectedCssiId,
+                                        'numero_empleado': employeeNumberController.text.trim(),
+                                      }).eq('id', userId);
+                                    }
+                                  }
                                 }
                                 if (mounted) {
                                   Navigator.pop(context);
@@ -258,7 +328,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return _users.where((user) {
       final name = (user['full_name'] ?? '').toString().toLowerCase();
       final role = (user['role'] ?? '').toString().toLowerCase();
-      return name.contains(query) || role.contains(query);
+      final numEmp = (user['numero_empleado'] ?? '').toString().toLowerCase();
+      return name.contains(query) || role.contains(query) || numEmp.contains(query);
     }).toList();
   }
 
@@ -395,7 +466,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               ),
                             ),
                             title: Text(
-                              user['full_name'] ?? 'Usuario sin nombre',
+                              '${user['numero_empleado'] != null ? '${user['numero_empleado']} | ' : ''}${user['full_name'] ?? 'Usuario sin nombre'}',
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Padding(
