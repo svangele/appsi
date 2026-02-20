@@ -1,39 +1,58 @@
 -- =============================================================================
--- SCRIPT CONSOLIDADO: Integridad de Base de Datos y Vinculación
--- Este script asegura que todas las tablas y columnas necesarias existan.
--- Ejecutar TODO este script en el SQL Editor de Supabase.
+-- SCRIPT DE REPARACIÓN: Creación de Usuarios (Versión Robusta)
 -- =============================================================================
 
--- 1. Asegurar extensión UUID
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- 1. Asegurar que pgcrypto esté en el esquema de extensiones
+CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA extensions;
 
--- 2. Asegurar que la tabla cssi_contributors exista con todas sus columnas
-CREATE TABLE IF NOT EXISTS public.cssi_contributors (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    nombre TEXT NOT NULL,
-    paterno TEXT NOT NULL,
-    materno TEXT,
-    numero_empleado TEXT,
-    foto_url TEXT,
-    usuario_id UUID REFERENCES auth.users(id)
-);
+-- 2. Limpiar función previa
+DROP FUNCTION IF EXISTS public.create_user_admin(text, text, text, text);
 
--- 3. Asegurar que perfiles tenga las columnas de vinculación
-ALTER TABLE public.profiles 
-ADD COLUMN IF NOT EXISTS cssi_id UUID REFERENCES public.cssi_contributors(id) ON DELETE SET NULL,
-ADD COLUMN IF NOT EXISTS numero_empleado TEXT;
+-- 3. Función definitiva con prefijos de esquema explícitos
+CREATE OR REPLACE FUNCTION public.create_user_admin(
+  email text,
+  password text,
+  full_name text,
+  user_role text
+)
+RETURNS uuid AS $$
+DECLARE
+  new_user_id uuid;
+BEGIN
+  new_user_id := gen_random_uuid();
 
--- 4. Sincronización (Opcional - Best effort)
-UPDATE public.profiles p
-SET 
-  cssi_id = c.id,
-  numero_empleado = c.numero_empleado
-FROM public.cssi_contributors c
-WHERE 
-  p.cssi_id IS NULL 
-  AND (c.nombre || ' ' || c.paterno) ILIKE p.full_name;
+  INSERT INTO auth.users (
+    id, 
+    instance_id, 
+    email, 
+    encrypted_password, 
+    email_confirmed_at, 
+    raw_app_meta_data, 
+    raw_user_meta_data, 
+    created_at, 
+    updated_at, 
+    role, 
+    aud,
+    confirmation_token
+  )
+  VALUES (
+    new_user_id,
+    '00000000-0000-0000-0000-000000000000',
+    email,
+    extensions.crypt(password, extensions.gen_salt('bf'::text)), -- Prefijo explícito y cast
+    now(),
+    '{"provider": "email", "providers": ["email"]}',
+    jsonb_build_object('full_name', full_name, 'role', user_role),
+    now(),
+    now(),
+    'authenticated',
+    'authenticated',
+    ''
+  );
 
--- 5. Comentarios de auditoría
-COMMENT ON TABLE public.cssi_contributors IS 'Catálogo de colaboradores del sistema CSSI';
-COMMENT ON COLUMN public.profiles.cssi_id IS 'ID del colaborador CSSI vinculado al perfil de usuario';
+  RETURN new_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 4. Forzar recarga de esquema
+NOTIFY pgrst, 'reload schema';
