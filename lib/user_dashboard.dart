@@ -292,19 +292,23 @@ class _UserDashboardState extends State<UserDashboard> {
 
                                   if (mounted) {
                                     Navigator.of(context).pop();
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: const Text('Contraseña Actualizada'),
-                                        content: const Text('Tu contraseña ha sido cambiada correctamente. La próxima vez queInicies sesión, usa tu nueva contraseña.'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(context),
-                                            child: const Text('ACEPTAR'),
+                                    Future.delayed(const Duration(milliseconds: 300), () {
+                                      if (mounted) {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: const Text('Contraseña Actualizada'),
+                                            content: const Text('Tu contraseña ha sido cambiada correctamente. La próxima vez que inicies sesión, usa tu nueva contraseña.'),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(context),
+                                                child: const Text('ACEPTAR'),
+                                              ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
-                                    );
+                                        );
+                                      }
+                                    });
                                   }
                                 } catch (e) {
                                   if (mounted) {
