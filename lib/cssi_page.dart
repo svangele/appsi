@@ -187,11 +187,13 @@ class _CssiPageState extends State<CssiPage> {
       builder: (context) => Dialog(
         insetPadding: const EdgeInsets.all(16),
         child: StatefulBuilder(
-          builder: (context, setDialogState) => Container(
-            width: double.maxFinite,
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Column(
-              children: [
+          builder: (context, setDialogState) {
+            final theme = Theme.of(context);
+            return Container(
+              width: double.maxFinite,
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Column(
+                children: [
                 Padding(
                   padding: const EdgeInsets.only(left: 24, right: 24, top: 24),
                   child: Row(
@@ -537,8 +539,8 @@ class _CssiPageState extends State<CssiPage> {
                   ),
                 ),
               ],
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
