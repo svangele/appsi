@@ -10,6 +10,7 @@ class IssiPage extends StatefulWidget {
 
 class _IssiPageState extends State<IssiPage> {
   List<Map<String, dynamic>> _items = [];
+  List<Map<String, dynamic>> _usuarios = [];
   bool _isLoading = true;
 
   static const List<String> _tipos = [
@@ -34,6 +35,23 @@ class _IssiPageState extends State<IssiPage> {
   void initState() {
     super.initState();
     _fetchItems();
+    _fetchUsuarios();
+  }
+
+  Future<void> _fetchUsuarios() async {
+    try {
+      final data = await Supabase.instance.client
+          .from('profiles')
+          .select('id, full_name')
+          .order('full_name');
+      if (mounted) {
+        setState(() {
+          _usuarios = List<Map<String, dynamic>>.from(data);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching usuarios: $e');
+    }
   }
 
   Future<void> _fetchItems() async {
@@ -111,16 +129,59 @@ class _IssiPageState extends State<IssiPage> {
     
     String tipo = item?['tipo'] ?? _tipos.first;
     String condicion = item?['condicion'] ?? _condiciones.first;
+    
+    String? selectedUsuarioId = item?['usuario_id'];
+    String? selectedUsuarioNombre = item?['usuario_nombre'];
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(isEditing ? 'Editar Elemento' : 'Nuevo Elemento'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        child: StatefulBuilder(
+          builder: (context, setDialogState) => Container(
+            width: double.maxFinite,
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          isEditing ? 'Editar Elemento' : 'Nuevo Elemento',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                DropdownButtonFormField<String>(
+                  value: selectedUsuarioId,
+                  decoration: const InputDecoration(
+                    labelText: 'Usuario *',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                  isExpanded: true,
+                  items: _usuarios.map((u) => DropdownMenuItem(
+                    value: u['id'] as String,
+                    child: Text(u['full_name'] ?? 'Usuario'),
+                  )).toList(),
+                  onChanged: (val) {
+                    final usuario = _usuarios.firstWhere((u) => u['id'] == val);
+                    setDialogState(() {
+                      selectedUsuarioId = val;
+                      selectedUsuarioNombre = usuario['full_name'];
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
                 TextField(
                   controller: ubicacionController,
                   decoration: const InputDecoration(
@@ -135,6 +196,7 @@ class _IssiPageState extends State<IssiPage> {
                     labelText: 'Tipo *',
                     prefixIcon: Icon(Icons.devices_outlined),
                   ),
+                  isExpanded: true,
                   items: _tipos.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                   onChanged: (val) => setDialogState(() => tipo = val!),
                 ),
@@ -226,6 +288,7 @@ class _IssiPageState extends State<IssiPage> {
                     labelText: 'Condición *',
                     prefixIcon: Icon(Icons.health_and_safety_outlined),
                   ),
+                  isExpanded: true,
                   items: _condiciones.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                   onChanged: (val) => setDialogState(() => condicion = val!),
                 ),
@@ -238,75 +301,77 @@ class _IssiPageState extends State<IssiPage> {
                   ),
                   maxLines: 2,
                 ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('CANCELAR'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (ubicacionController.text.isEmpty || marcaController.text.isEmpty || 
+                              modeloController.text.isEmpty || selectedUsuarioId == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Completa los campos obligatorios (*)')),
+                            );
+                            return;
+                          }
+
+                          try {
+                            final data = {
+                              'ubicacion': ubicacionController.text.trim(),
+                              'tipo': tipo,
+                              'marca': marcaController.text.trim(),
+                              'modelo': modeloController.text.trim(),
+                              'n_s': nsController.text.trim().isEmpty ? null : nsController.text.trim(),
+                              'imei': imeiController.text.trim().isEmpty ? null : imeiController.text.trim(),
+                              'cpu': cpuController.text.trim().isEmpty ? null : cpuController.text.trim(),
+                              'ssd': ssdController.text.trim().isEmpty ? null : ssdController.text.trim(),
+                              'ram': ramController.text.trim().isEmpty ? null : ramController.text.trim(),
+                              'valor': valorController.text.trim().isEmpty ? null : double.tryParse(valorController.text.trim()),
+                              'condicion': condicion,
+                              'observaciones': observacionesController.text.trim().isEmpty ? null : observacionesController.text.trim(),
+                              'usuario_id': selectedUsuarioId,
+                              'usuario_nombre': selectedUsuarioNombre,
+                            };
+
+                            if (isEditing) {
+                              await Supabase.instance.client.from('issi_inventory').update(data).eq('id', item['id']);
+                            } else {
+                              await Supabase.instance.client.from('issi_inventory').insert(data);
+                            }
+
+                            if (mounted) {
+                              Navigator.pop(context);
+                              _fetchItems();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(isEditing ? 'Elemento actualizado' : 'Elemento creado con éxito'),
+                                  backgroundColor: const Color(0xFFB1CB34),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                              );
+                            }
+                          }
+                        },
+                        child: Text(isEditing ? 'GUARDAR' : 'CREAR'),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCELAR')),
-            ElevatedButton(
-              onPressed: () async {
-                if (ubicacionController.text.isEmpty || marcaController.text.isEmpty || 
-                    modeloController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Completa los campos obligatorios (*)')),
-                  );
-                  return;
-                }
-
-                try {
-                  final user = Supabase.instance.client.auth.currentUser;
-                  final profile = user != null 
-                      ? await Supabase.instance.client
-                          .from('profiles')
-                          .select('full_name')
-                          .eq('id', user.id)
-                          .maybeSingle()
-                      : null;
-
-                  final data = {
-                    'ubicacion': ubicacionController.text.trim(),
-                    'tipo': tipo,
-                    'marca': marcaController.text.trim(),
-                    'modelo': modeloController.text.trim(),
-                    'n_s': nsController.text.trim().isEmpty ? null : nsController.text.trim(),
-                    'imei': imeiController.text.trim().isEmpty ? null : imeiController.text.trim(),
-                    'cpu': cpuController.text.trim().isEmpty ? null : cpuController.text.trim(),
-                    'ssd': ssdController.text.trim().isEmpty ? null : ssdController.text.trim(),
-                    'ram': ramController.text.trim().isEmpty ? null : ramController.text.trim(),
-                    'valor': valorController.text.trim().isEmpty ? null : double.tryParse(valorController.text.trim()),
-                    'condicion': condicion,
-                    'observaciones': observacionesController.text.trim().isEmpty ? null : observacionesController.text.trim(),
-                  };
-
-                  if (isEditing) {
-                    await Supabase.instance.client.from('issi_inventory').update(data).eq('id', item['id']);
-                  } else {
-                    data['usuario_id'] = user?.id;
-                    data['usuario_nombre'] = profile?['full_name'] ?? 'Usuario';
-                    await Supabase.instance.client.from('issi_inventory').insert(data);
-                  }
-
-                  if (mounted) {
-                    Navigator.pop(context);
-                    _fetchItems();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(isEditing ? 'Elemento actualizado' : 'Elemento creado con éxito'),
-                        backgroundColor: const Color(0xFFB1CB34),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-                    );
-                  }
-                }
-              },
-              child: Text(isEditing ? 'GUARDAR' : 'CREAR'),
-            ),
-          ],
         ),
       ),
     );
