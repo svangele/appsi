@@ -184,14 +184,21 @@ class _CssiPageState extends State<CssiPage> {
             constraints: const BoxConstraints(maxWidth: 600),
             child: Column(
               children: [
-                AppBar(
-                  title: Text(isEditing ? 'Editar Colaborador' : 'Nuevo Colaborador'),
-                  automaticallyImplyLeading: false,
-                  backgroundColor: const Color(0xFF344092),
-                  foregroundColor: Colors.white,
-                  actions: [
-                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.only(left: 24, right: 24, top: 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        isEditing ? 'Editar Colaborador' : 'Nuevo Colaborador',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
                 ),
                 Expanded(
                   child: SingleChildScrollView(
@@ -371,87 +378,94 @@ class _CssiPageState extends State<CssiPage> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(24),
-                  child: ElevatedButton(
-                    onPressed: saving ? null : () async {
-                      if (nombreCtrl.text.isEmpty || paternoCtrl.text.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nombre y Paterno son obligatorios'), backgroundColor: Colors.red));
-                        return;
-                      }
-                      
-                      setDialogState(() => saving = true);
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('CANCELAR'),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: saving ? null : () async {
+                            if (nombreCtrl.text.isEmpty || paternoCtrl.text.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nombre y Paterno son obligatorios'), backgroundColor: Colors.red));
+                              return;
+                            }
+                            
+                            setDialogState(() => saving = true);
 
-                      String? toUpper(String val) => val.trim().isEmpty ? null : val.trim().toUpperCase();
-                      
-                      final data = {
-                        'nombre': toUpper(nombreCtrl.text)!,
-                        'paterno': toUpper(paternoCtrl.text)!,
-                        'materno': toUpper(maternoCtrl.text),
-                        'curp': toUpper(curpCtrl.text),
-                        'rfc': toUpper(rfcCtrl.text),
-                        'imss': toUpper(imssCtrl.text),
-                        'credito': credito,
-                        'fecha_nacimiento': fechaNacCtrl.text.isEmpty ? null : fechaNacCtrl.text,
-                        'genero': genero,
-                        'talla': toUpper(tallaCtrl.text),
-                        'estado_civil': estadoCivil,
-                        'escolaridad': escolaridad,
-                        'detalle_escolaridad': toUpper(detalleEscolCtrl.text),
-                        'calle': toUpper(calleCtrl.text),
-                        'no_calle': toUpper(noCalleCtrl.text),
-                        'colonia': toUpper(coloniaCtrl.text),
-                        'municipio_alcaldia': toUpper(municipioCtrl.text),
-                        'estado_federal': toUpper(estadoFedCtrl.text),
-                        'codigo_postal': toUpper(cpCtrl.text),
-                        'telefono': toUpper(telCtrl.text),
-                        'celular': toUpper(celCtrl.text),
-                        'correo_personal': toUpper(correoCtrl.text),
-                        'banco': toUpper(bancoCtrl.text),
-                        'cuenta': toUpper(cuentaCtrl.text),
-                        'clabe': toUpper(clabeCtrl.text),
-                        'area': toUpper(areaCtrl.text),
-                        'puesto': toUpper(puestoCtrl.text),
-                        'ubicacion': toUpper(ubicacionCtrl.text),
-                        'empresa': toUpper(empresaCtrl.text),
-                        'jefe_inmediato': toUpper(jefeCtrl.text),
-                        'lider': toUpper(liderCtrl.text),
-                        'gerente_regional': toUpper(gerenteCtrl.text),
-                        'director': toUpper(directorCtrl.text),
-                        'recluta': toUpper(reclutaCtrl.text),
-                        'reclutador': toUpper(reclutadorCtrl.text),
-                        'fuente_reclutamiento': toUpper(fuenteCtrl.text),
-                        'fuente_reclutamiento_espec': toUpper(fuenteEspecCtrl.text),
-                        'observaciones': toUpper(obsCtrl.text),
-                        'referencia_nombre': toUpper(refNombreCtrl.text),
-                        'referencia_telefono': toUpper(refTelCtrl.text),
-                        'referencia_relacion': toUpper(refRelacionCtrl.text),
-                        'usuario_id': Supabase.instance.client.auth.currentUser?.id,
-                        'usuario_nombre': 'ADMIN',
-                      };
+                            String? toUpper(String val) => val.trim().isEmpty ? null : val.trim().toUpperCase();
+                            
+                            final data = {
+                              'nombre': toUpper(nombreCtrl.text)!,
+                              'paterno': toUpper(paternoCtrl.text)!,
+                              'materno': toUpper(maternoCtrl.text),
+                              'curp': toUpper(curpCtrl.text),
+                              'rfc': toUpper(rfcCtrl.text),
+                              'imss': toUpper(imssCtrl.text),
+                              'credito': credito,
+                              'fecha_nacimiento': fechaNacCtrl.text.isEmpty ? null : fechaNacCtrl.text,
+                              'genero': genero,
+                              'talla': toUpper(tallaCtrl.text),
+                              'estado_civil': estadoCivil,
+                              'escolaridad': escolaridad,
+                              'detalle_escolaridad': toUpper(detalleEscolCtrl.text),
+                              'calle': toUpper(calleCtrl.text),
+                              'no_calle': toUpper(noCalleCtrl.text),
+                              'colonia': toUpper(coloniaCtrl.text),
+                              'municipio_alcaldia': toUpper(municipioCtrl.text),
+                              'estado_federal': toUpper(estadoFedCtrl.text),
+                              'codigo_postal': toUpper(cpCtrl.text),
+                              'telefono': toUpper(telCtrl.text),
+                              'celular': toUpper(celCtrl.text),
+                              'correo_personal': toUpper(correoCtrl.text),
+                              'banco': toUpper(bancoCtrl.text),
+                              'cuenta': toUpper(cuentaCtrl.text),
+                              'clabe': toUpper(clabeCtrl.text),
+                              'area': toUpper(areaCtrl.text),
+                              'puesto': toUpper(puestoCtrl.text),
+                              'ubicacion': toUpper(ubicacionCtrl.text),
+                              'empresa': toUpper(empresaCtrl.text),
+                              'jefe_inmediato': toUpper(jefeCtrl.text),
+                              'lider': toUpper(liderCtrl.text),
+                              'gerente_regional': toUpper(gerenteCtrl.text),
+                              'director': toUpper(directorCtrl.text),
+                              'recluta': toUpper(reclutaCtrl.text),
+                              'reclutador': toUpper(reclutadorCtrl.text),
+                              'fuente_reclutamiento': toUpper(fuenteCtrl.text),
+                              'fuente_reclutamiento_espec': toUpper(fuenteEspecCtrl.text),
+                              'observaciones': toUpper(obsCtrl.text),
+                              'referencia_nombre': toUpper(refNombreCtrl.text),
+                              'referencia_telefono': toUpper(refTelCtrl.text),
+                              'referencia_relacion': toUpper(refRelacionCtrl.text),
+                              'usuario_id': Supabase.instance.client.auth.currentUser?.id,
+                              'usuario_nombre': 'ADMIN',
+                            };
 
-                      try {
-                        if (isEditing) {
-                          await Supabase.instance.client.from('cssi_contributors').update(data).eq('id', item['id']);
-                        } else {
-                          await Supabase.instance.client.from('cssi_contributors').insert(data);
-                        }
-                        if (mounted) {
-                          Navigator.pop(context);
-                          _fetchItems();
-                        }
-                      } catch (e) {
-                         setDialogState(() => saving = false);
-                         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 50),
-                      backgroundColor: const Color(0xFF344092),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: saving
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text(isEditing ? 'GUARDAR CAMBIOS' : 'CREAR COLABORADOR'),
+                            try {
+                              if (isEditing) {
+                                await Supabase.instance.client.from('cssi_contributors').update(data).eq('id', item['id']);
+                              } else {
+                                await Supabase.instance.client.from('cssi_contributors').insert(data);
+                              }
+                              if (mounted) {
+                                Navigator.pop(context);
+                                _fetchItems();
+                              }
+                            } catch (e) {
+                               setDialogState(() => saving = false);
+                               if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+                            }
+                          },
+                          child: saving
+                              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                              : Text(isEditing ? 'GUARDAR' : 'CREAR'),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
