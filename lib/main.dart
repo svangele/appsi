@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
           primary: const Color(0xFF344092),
           secondary: const Color(0xFFB1CB34),
           tertiary: const Color(0xFFEA54A4),
-          surface: Colors.grey[50]!,
+          surface: Colors.grey[50] ?? Colors.white,
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF344092),
@@ -63,7 +63,7 @@ class MyApp extends StatelessWidget {
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey[300]!),
+            borderSide: BorderSide(color: Colors.grey[300] ?? Colors.grey),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
