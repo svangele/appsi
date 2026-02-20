@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 
 class CssiPage extends StatefulWidget {
   const CssiPage({super.key});
@@ -57,7 +59,8 @@ class _CssiPageState extends State<CssiPage> {
         final rfc = (item['rfc'] ?? '').toString().toLowerCase();
         final area = (item['area'] ?? '').toString().toLowerCase();
         final puesto = (item['puesto'] ?? '').toString().toLowerCase();
-        return name.contains(query) || curp.contains(query) || rfc.contains(query) || area.contains(query) || puesto.contains(query);
+        final numEmp = (item['numero_empleado'] ?? '').toString().toLowerCase();
+        return name.contains(query) || curp.contains(query) || rfc.contains(query) || area.contains(query) || puesto.contains(query) || numEmp.contains(query);
       }).toList();
     }
     return result;
@@ -77,8 +80,9 @@ class _CssiPageState extends State<CssiPage> {
     final filtered = _filteredItems;
     if (filtered.isEmpty) return;
 
-    final headers = ['Nombre', 'Paterno', 'Materno', 'CURP', 'RFC', 'Puesto', 'Área', 'Ubicación', 'Correo'];
+    final headers = ['Num. Empleado', 'Nombre', 'Paterno', 'Materno', 'CURP', 'RFC', 'Puesto', 'Área', 'Ubicación', 'Correo'];
     final rows = filtered.map((item) => [
+      item['numero_empleado'] ?? '',
       item['nombre'] ?? '',
       item['paterno'] ?? '',
       item['materno'] ?? '',
@@ -130,6 +134,8 @@ class _CssiPageState extends State<CssiPage> {
     final curpCtrl = TextEditingController(text: item?['curp']);
     final rfcCtrl = TextEditingController(text: item?['rfc']);
     final imssCtrl = TextEditingController(text: item?['imss']);
+    final numeroEmpleadoCtrl = TextEditingController(text: item?['numero_empleado']);
+    
     final fechaNacCtrl = TextEditingController(text: item?['fecha_nacimiento']);
     final tallaCtrl = TextEditingController(text: item?['talla']);
     final detalleEscolCtrl = TextEditingController(text: item?['detalle_escolaridad']);
@@ -172,6 +178,8 @@ class _CssiPageState extends State<CssiPage> {
     String? estadoCivil = item?['estado_civil'];
     String? escolaridad = item?['escolaridad'];
     String? credito = item?['credito'];
+    XFile? pickedFile;
+    String? currentFotoUrl = item?['foto_url'];
 
     showDialog(
       context: context,
@@ -207,6 +215,49 @@ class _CssiPageState extends State<CssiPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _sectionTitle('SI Colaborador'),
+                        Center(
+                          child: GestureDetector(
+                            onTap: () async {
+                              final picker = ImagePicker();
+                              final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+                              if (image != null) setDialogState(() => pickedFile = image);
+                            },
+                            child: Stack(
+                              children: [
+                                CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor: Colors.grey[200],
+                                  backgroundImage: pickedFile != null 
+                                    ? null // Will use child Image.file
+                                    : (currentFotoUrl != null ? NetworkImage(currentFotoUrl) : null),
+                                  child: pickedFile != null 
+                                    ? ClipOval(child: Image.network(pickedFile!.path, fit: BoxFit.cover, width: 100, height: 100))
+                                    : (currentFotoUrl == null ? const Icon(Icons.person, size: 50, color: Colors.grey) : null),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle),
+                                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextField(
+                          controller: numeroEmpleadoCtrl,
+                          decoration: const InputDecoration(labelText: 'Número de Empleado *', hintText: '4 dígitos'),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(4),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
                         TextField(controller: nombreCtrl, decoration: const InputDecoration(labelText: 'Nombre *')),
                         const SizedBox(height: 12),
                         Row(
@@ -390,8 +441,13 @@ class _CssiPageState extends State<CssiPage> {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: saving ? null : () async {
-                            if (nombreCtrl.text.isEmpty || paternoCtrl.text.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nombre y Paterno son obligatorios'), backgroundColor: Colors.red));
+                            if (nombreCtrl.text.isEmpty || paternoCtrl.text.isEmpty || numeroEmpleadoCtrl.text.length != 4) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Nombre, Paterno y Num. Empleado (4 dígitos) son obligatorios'), 
+                                  backgroundColor: Colors.red
+                                )
+                              );
                               return;
                             }
                             
@@ -441,11 +497,23 @@ class _CssiPageState extends State<CssiPage> {
                               'referencia_nombre': toUpper(refNombreCtrl.text),
                               'referencia_telefono': toUpper(refTelCtrl.text),
                               'referencia_relacion': toUpper(refRelacionCtrl.text),
+                              'numero_empleado': numeroEmpleadoCtrl.text.trim(),
+                              'foto_url': currentFotoUrl,
                               'usuario_id': Supabase.instance.client.auth.currentUser?.id,
                               'usuario_nombre': 'ADMIN',
                             };
 
                             try {
+                              if (pickedFile != null) {
+                                final bytes = await pickedFile!.readAsBytes();
+                                final fileExt = pickedFile!.path.split('.').last;
+                                final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+                                final path = 'photos/$fileName';
+                                
+                                await Supabase.instance.client.storage.from('employee_photos').uploadBinary(path, bytes);
+                                data['foto_url'] = Supabase.instance.client.storage.from('employee_photos').getPublicUrl(path);
+                              }
+
                               if (isEditing) {
                                 await Supabase.instance.client.from('cssi_contributors').update(data).eq('id', item['id']);
                               } else {
@@ -616,9 +684,12 @@ class _CssiPageState extends State<CssiPage> {
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                                 leading: CircleAvatar(
                                   backgroundColor: const Color(0xFF344092).withValues(alpha: 0.1),
-                                  child: Text(item['nombre'][0], style: const TextStyle(color: Color(0xFF344092), fontWeight: FontWeight.bold)),
+                                  backgroundImage: item['foto_url'] != null ? NetworkImage(item['foto_url']) : null,
+                                  child: item['foto_url'] == null 
+                                    ? Text(item['nombre'][0], style: const TextStyle(color: Color(0xFF344092), fontWeight: FontWeight.bold))
+                                    : null,
                                 ),
-                                title: Text('${item['nombre']} ${item['paterno']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                title: Text('${item['numero_empleado'] ?? '---'} | ${item['nombre']} ${item['paterno']}', style: const TextStyle(fontWeight: FontWeight.bold)),
                                 subtitle: Text('${item['puesto'] ?? 'Sin puesto'} - ${item['area'] ?? 'Sin área'}'),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
