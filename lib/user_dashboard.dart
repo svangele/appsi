@@ -281,8 +281,13 @@ class _UserDashboardState extends State<UserDashboard> {
                                   );
 
                                   if (mounted) {
+                                    Navigator.of(context).pop();
                                     await Supabase.instance.client.auth.signOut();
-                                    Navigator.of(context).popUntil((route) => route.isFirst);
+                                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                                      if (mounted) {
+                                        Navigator.of(context).popUntil((route) => route.isFirst);
+                                      }
+                                    });
                                   }
                                 } catch (e) {
                                   if (mounted) {

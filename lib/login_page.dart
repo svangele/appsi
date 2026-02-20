@@ -12,6 +12,7 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   Future<void> _authenticate() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
@@ -103,11 +104,15 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _passwordController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Contraseña',
-                      prefixIcon: Icon(Icons.key_outlined),
+                      prefixIcon: const Icon(Icons.key_outlined),
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      ),
                     ),
-                    obscureText: true,
+                    obscureText: _obscurePassword,
                   ),
                   const SizedBox(height: 32),
                   _isLoading
