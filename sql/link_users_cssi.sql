@@ -1,15 +1,30 @@
 -- =============================================================================
--- Migration: Link Profiles with CSSI Contributors
--- Run this in Supabase SQL Editor
+-- SCRIPT CONSOLIDADO: Integridad de Base de Datos y Vinculación
+-- Este script asegura que todas las tablas y columnas necesarias existan.
+-- Ejecutar TODO este script en el SQL Editor de Supabase.
 -- =============================================================================
 
--- 1. Add new columns to public.profiles
+-- 1. Asegurar extensión UUID
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 2. Asegurar que la tabla cssi_contributors exista con todas sus columnas
+CREATE TABLE IF NOT EXISTS public.cssi_contributors (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    nombre TEXT NOT NULL,
+    paterno TEXT NOT NULL,
+    materno TEXT,
+    numero_empleado TEXT,
+    foto_url TEXT,
+    usuario_id UUID REFERENCES auth.users(id)
+);
+
+-- 3. Asegurar que perfiles tenga las columnas de vinculación
 ALTER TABLE public.profiles 
 ADD COLUMN IF NOT EXISTS cssi_id UUID REFERENCES public.cssi_contributors(id) ON DELETE SET NULL,
 ADD COLUMN IF NOT EXISTS numero_empleado TEXT;
 
--- 2. (Optional) Update existing profiles if they have matching names in CSSI
--- This is a best-effort sync for existing data
+-- 4. Sincronización (Opcional - Best effort)
 UPDATE public.profiles p
 SET 
   cssi_id = c.id,
@@ -19,5 +34,6 @@ WHERE
   p.cssi_id IS NULL 
   AND (c.nombre || ' ' || c.paterno) ILIKE p.full_name;
 
-COMMENT ON COLUMN public.profiles.cssi_id IS 'Referencia al colaborador en la tabla cssi_contributors';
-COMMENT ON COLUMN public.profiles.numero_empleado IS 'Número de empleado sincronizado del sistema CSSI';
+-- 5. Comentarios de auditoría
+COMMENT ON TABLE public.cssi_contributors IS 'Catálogo de colaboradores del sistema CSSI';
+COMMENT ON COLUMN public.profiles.cssi_id IS 'ID del colaborador CSSI vinculado al perfil de usuario';
