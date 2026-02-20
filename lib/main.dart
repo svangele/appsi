@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'main_navigation.dart';
 import 'login_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  const supabaseUrl = String.fromEnvironment('SB_URL');
-  const supabaseAnonKey = String.fromEnvironment('SB_TOKEN');
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("Warning: .env file not found, falling back to environment variables");
+  }
+
+  final supabaseUrl = dotenv.maybeGet('SB_URL') ?? const String.fromEnvironment('SB_URL');
+  final supabaseAnonKey = dotenv.maybeGet('SB_TOKEN') ?? const String.fromEnvironment('SB_TOKEN');
 
   if (supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty) {
     await Supabase.initialize(

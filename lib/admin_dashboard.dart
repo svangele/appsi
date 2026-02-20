@@ -11,6 +11,8 @@ class AdminDashboard extends StatefulWidget {
 class _AdminDashboardState extends State<AdminDashboard> {
   List<Map<String, dynamic>> _users = [];
   bool _isLoading = true;
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -189,6 +191,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () async {
+                              if (!isEditing) {
+                                if (emailController.text.trim().isEmpty || passwordController.text.trim().isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Correo y contraseña son obligatorios')),
+                                  );
+                                  return;
+                                }
+                                if (passwordController.text.trim().length < 8) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('La contraseña debe tener al menos 8 caracteres')),
+                                  );
+                                  return;
+                                }
+                              }
                               try {
                                 if (isEditing) {
                                   await Supabase.instance.client.from('profiles').update({
@@ -236,9 +252,39 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
+  List<Map<String, dynamic>> get _filteredUsers {
+    if (_searchQuery.isEmpty) return _users;
+    final query = _searchQuery.toLowerCase();
+    return _users.where((user) {
+      final name = (user['full_name'] ?? '').toString().toLowerCase();
+      final role = (user['role'] ?? '').toString().toLowerCase();
+      return name.contains(query) || role.contains(query);
+    }).toList();
+  }
+
+  Widget _buildShimmerItem() {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey[200]!),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        leading: CircleAvatar(backgroundColor: Colors.grey[200]),
+        title: Container(height: 14, width: 120, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(4))),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Container(height: 10, width: 60, decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(4))),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final users = _filteredUsers;
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
@@ -247,14 +293,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
         icon: const Icon(Icons.person_add),
         label: const Text('NUEVO USUARIO'),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
+      body: Column(
               children: [
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
-                  color: theme.colorScheme.primary.withOpacity(0.05),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.05),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -270,18 +314,65 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         'Total: ${_users.length} usuarios registrados',
                         style: TextStyle(color: Colors.grey[600]),
                       ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Buscar por nombre o rol...',
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                )
+                              : null,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                        onChanged: (value) => setState(() => _searchQuery = value),
+                      ),
                     ],
                   ),
                 ),
                 Expanded(
-                  child: RefreshIndicator(
+                  child: _isLoading
+                      ? ListView.separated(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: 6,
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          itemBuilder: (_, __) => _buildShimmerItem(),
+                        )
+                      : RefreshIndicator(
                     onRefresh: _fetchUsers,
-                    child: ListView.separated(
+                    child: users.isEmpty
+                        ? ListView(
+                            children: [
+                              const SizedBox(height: 80),
+                              Center(
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.person_search, size: 64, color: Colors.grey[300]),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      _searchQuery.isNotEmpty ? 'Sin resultados para "$_searchQuery"' : 'No hay usuarios registrados',
+                                      style: TextStyle(color: Colors.grey[500]),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
+                        : ListView.separated(
                       padding: const EdgeInsets.all(16),
-                      itemCount: _users.length,
+                      itemCount: users.length,
                       separatorBuilder: (context, index) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
-                        final user = _users[index];
+                        final user = users[index];
                         final String role = user['role'] ?? 'usuario';
                         
                         return Card(
@@ -294,8 +385,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                             leading: CircleAvatar(
                               backgroundColor: role == 'admin' 
-                                  ? theme.colorScheme.tertiary.withOpacity(0.1)
-                                  : theme.colorScheme.secondary.withOpacity(0.1),
+                                  ? theme.colorScheme.tertiary.withValues(alpha: 0.1)
+                                  : theme.colorScheme.secondary.withValues(alpha: 0.1),
                               child: Icon(
                                 role == 'admin' ? Icons.admin_panel_settings : Icons.person_outline,
                                 color: role == 'admin' 
@@ -315,8 +406,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
                                       color: role == 'admin' 
-                                          ? theme.colorScheme.tertiary.withOpacity(0.1)
-                                          : theme.colorScheme.primary.withOpacity(0.1),
+                                          ? theme.colorScheme.tertiary.withValues(alpha: 0.1)
+                                          : theme.colorScheme.primary.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
