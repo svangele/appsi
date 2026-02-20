@@ -166,6 +166,8 @@ class _UserDashboardState extends State<UserDashboard> {
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
     bool isLoading = false;
+    bool obscureNewPassword = true;
+    bool obscureConfirmPassword = true;
 
     showDialog(
       context: context,
@@ -205,20 +207,28 @@ class _UserDashboardState extends State<UserDashboard> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: newPasswordController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Nueva Contraseña',
-                    prefixIcon: Icon(Icons.lock),
+                    prefixIcon: const Icon(Icons.lock),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscureNewPassword ? Icons.visibility_off : Icons.visibility),
+                      onPressed: () => setDialogState(() => obscureNewPassword = !obscureNewPassword),
+                    ),
                   ),
-                  obscureText: true,
+                  obscureText: obscureNewPassword,
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: confirmPasswordController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Confirmar Nueva Contraseña',
-                    prefixIcon: Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
+                      onPressed: () => setDialogState(() => obscureConfirmPassword = !obscureConfirmPassword),
+                    ),
                   ),
-                  obscureText: true,
+                  obscureText: obscureConfirmPassword,
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -281,13 +291,8 @@ class _UserDashboardState extends State<UserDashboard> {
                                   );
 
                                   if (mounted) {
-                                    Navigator.of(context).pop();
                                     await Supabase.instance.client.auth.signOut();
-                                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                                      if (mounted) {
-                                        Navigator.of(context).popUntil((route) => route.isFirst);
-                                      }
-                                    });
+                                    Navigator.of(context).pop();
                                   }
                                 } catch (e) {
                                   if (mounted) {
