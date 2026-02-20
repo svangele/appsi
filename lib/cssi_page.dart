@@ -526,6 +526,13 @@ class _CssiPageState extends State<CssiPage> {
     final filtered = _filteredItems;
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showForm(),
+        backgroundColor: theme.colorScheme.secondary,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('NUEVO'),
+      ),
       body: Column(
         children: [
           Container(
@@ -556,31 +563,28 @@ class _CssiPageState extends State<CssiPage> {
                   'Total: ${_items.length} colaboradores${filtered.length != _items.length ? ' (mostrando ${filtered.length})' : ''}',
                   style: TextStyle(color: Colors.grey[600]),
                 ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar por nombre, CURP, RFC...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() { _searchQuery = ''; });
+                            },
+                          )
+                        : null,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                  onChanged: (v) => setState(() => _searchQuery = v),
+                ),
               ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            color: Colors.white,
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Buscar por nombre, CURP, RFC...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() { _searchQuery = ''; });
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-              onChanged: (v) => setState(() => _searchQuery = v),
             ),
           ),
           Expanded(
@@ -636,12 +640,6 @@ class _CssiPageState extends State<CssiPage> {
                       ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showForm(),
-        backgroundColor: const Color(0xFF344092),
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
       ),
     );
   }
