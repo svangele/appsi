@@ -515,30 +515,58 @@ class _CssiPageState extends State<CssiPage> {
       body: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(16.0),
-            color: Colors.white,
-            child: Row(
+            padding: const EdgeInsets.all(24),
+            color: theme.colorScheme.primary.withValues(alpha: 0.05),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Buscar por nombre, CURP, RFC...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      filled: true,
-                      fillColor: Colors.grey[50],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Colaboradores SSI',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    onChanged: (v) => setState(() => _searchQuery = v),
-                  ),
+                    IconButton(
+                      icon: Icon(Icons.download_outlined, color: theme.colorScheme.primary),
+                      tooltip: 'Exportar CSV',
+                      onPressed: _exportCsv,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                IconButton(
-                  icon: const Icon(Icons.download_outlined, color: Color(0xFF344092)),
-                  tooltip: 'Exportar CSV',
-                  onPressed: _exportCsv,
+                const SizedBox(height: 4),
+                Text(
+                  'Total: ${_items.length} colaboradores${filtered.length != _items.length ? ' (mostrando ${filtered.length})' : ''}',
+                  style: TextStyle(color: Colors.grey[600]),
                 ),
               ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(16.0),
+            color: Colors.white,
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Buscar por nombre, CURP, RFC...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() { _searchQuery = ''; });
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                filled: true,
+                fillColor: Colors.grey[50],
+              ),
+              onChanged: (v) => setState(() => _searchQuery = v),
             ),
           ),
           Expanded(
