@@ -290,18 +290,23 @@ class _UserDashboardState extends State<UserDashboard> {
                                     UserAttributes(password: newPasswordController.text),
                                   );
 
-                                  if (mounted) {
+                                                                    if (mounted) {
+                                    setDialogState(() => isLoading = false);
                                     Navigator.of(context).pop();
                                     Future.delayed(const Duration(milliseconds: 300), () {
                                       if (mounted) {
                                         showDialog(
                                           context: context,
+                                          barrierDismissible: false,
                                           builder: (context) => AlertDialog(
                                             title: const Text('Contraseña Actualizada'),
-                                            content: const Text('Tu contraseña ha sido cambiada correctamente. La próxima vez que inicies sesión, usa tu nueva contraseña.'),
+                                            content: const Text('Tu contraseña ha sido cambiada correctamente. Inicia sesión nuevamente con tu nueva contraseña.'),
                                             actions: [
                                               TextButton(
-                                                onPressed: () => Navigator.pop(context),
+                                                onPressed: () async {
+                                                  await Supabase.instance.client.auth.signOut();
+                                                  if (context.mounted) Navigator.pop(context);
+                                                },
                                                 child: const Text('ACEPTAR'),
                                               ),
                                             ],
