@@ -125,6 +125,15 @@ class _UserDashboardState extends State<UserDashboard> {
                           const SizedBox(height: 24),
                           Divider(color: Colors.grey[200]),
                           const SizedBox(height: 16),
+                          OutlinedButton.icon(
+                            onPressed: () => _showChangePasswordDialog(),
+                            icon: const Icon(Icons.lock_outline),
+                            label: const Text('CAMBIAR CONTRASEÑA'),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 45),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
                           _buildInfoRow(Icons.calendar_today, 'Miembro desde', _profile?['created_at'].toString().split('T')[0] ?? '---'),
                         ],
                       ),
@@ -150,6 +159,168 @@ class _UserDashboardState extends State<UserDashboard> {
               ],
             ),
           );
+  }
+
+  void _showChangePasswordDialog() {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            width: double.maxFinite,
+            constraints: const BoxConstraints(maxWidth: 500),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Cambiar Contraseña',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: currentPasswordController,
+                  decoration: const InputDecoration(
+                    labelText: 'Contraseña Actual',
+                    prefixIcon: Icon(Icons.lock_outline),
+                  ),
+                  obscureText: true,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: newPasswordController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nueva Contraseña',
+                    prefixIcon: Icon(Icons.lock),
+                  ),
+                  obscureText: true,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: confirmPasswordController,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirmar Nueva Contraseña',
+                    prefixIcon: Icon(Icons.lock_outline),
+                  ),
+                  obscureText: true,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Mínimo 8 caracteres',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: isLoading ? null : () => Navigator.pop(context),
+                        child: const Text('CANCELAR'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: isLoading
+                            ? null
+                            : () async {
+                                if (currentPasswordController.text.isEmpty ||
+                                    newPasswordController.text.isEmpty ||
+                                    confirmPasswordController.text.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Completa todos los campos')),
+                                  );
+                                  return;
+                                }
+
+                                if (newPasswordController.text.length < 8) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('La nueva contraseña debe tener al menos 8 caracteres')),
+                                  );
+                                  return;
+                                }
+
+                                if (newPasswordController.text != confirmPasswordController.text) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Las contraseñas no coinciden')),
+                                  );
+                                  return;
+                                }
+
+                                setDialogState(() => isLoading = true);
+
+                                try {
+                                  final user = Supabase.instance.client.auth.currentUser;
+                                  if (user == null || user.email == null) {
+                                    throw Exception('No se pudo obtener el usuario');
+                                  }
+
+                                  await Supabase.instance.client.auth.signInWithPassword(
+                                    email: user.email!,
+                                    password: currentPasswordController.text,
+                                  );
+
+                                  await Supabase.instance.client.auth.updateUser(
+                                    UserAttributes(password: newPasswordController.text),
+                                  );
+
+                                  if (mounted) {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Contraseña actualizada correctamente'),
+                                        backgroundColor: Color(0xFFB1CB34),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error: La contraseña actual es incorrecta'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                } finally {
+                                  if (mounted) {
+                                    setDialogState(() => isLoading = false);
+                                  }
+                                }
+                              },
+                        child: isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('GUARDAR'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
