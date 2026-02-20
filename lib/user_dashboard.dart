@@ -24,7 +24,7 @@ class _UserDashboardState extends State<UserDashboard> {
       if (user != null && user.id.isNotEmpty) {
         final data = await Supabase.instance.client
             .from('profiles')
-            .select()
+            .select('*, cssi_contributors(*)')
             .eq('id', user.id)
             .maybeSingle();
         
@@ -117,18 +117,52 @@ class _UserDashboardState extends State<UserDashboard> {
                       padding: const EdgeInsets.all(24),
                       child: Column(
                         children: [
-                          const Icon(Icons.info_outline, color: Colors.blueGrey, size: 32),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Información del Sistema',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                          const Row(
+                            children: [
+                              Icon(Icons.badge_outlined, color: Colors.blueGrey, size: 28),
+                              SizedBox(width: 12),
+                              Text(
+                                'Datos del Colaborador',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Esta cuenta está configurada con acceso de lectura únicamente. No puedes realizar modificaciones desde este panel.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.blueGrey),
-                          ),
+                          const SizedBox(height: 24),
+                          if (_profile?['cssi_contributors'] != null) ...[
+                            _buildInfoRow(Icons.numbers, 'Número de empleado', _profile?['cssi_contributors']?['numero_empleado'] ?? '---'),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(Icons.fingerprint, 'CURP', _profile?['cssi_contributors']?['curp'] ?? '---'),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(Icons.business, 'Empresa', _profile?['cssi_contributors']?['empresa'] ?? '---'),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(Icons.account_tree_outlined, 'Área', _profile?['cssi_contributors']?['area'] ?? '---'),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(Icons.location_on_outlined, 'Ubicación', _profile?['cssi_contributors']?['ubicacion'] ?? '---'),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(Icons.person_outline, 'Director', _profile?['cssi_contributors']?['director'] ?? '---'),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(Icons.manage_accounts_outlined, 'Gerente regional', _profile?['cssi_contributors']?['gerente_regional'] ?? '---'),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(Icons.supervisor_account_outlined, 'Jefe inmediato', _profile?['cssi_contributors']?['jefe_inmediato'] ?? '---'),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(Icons.groups_outlined, 'Líder', _profile?['cssi_contributors']?['lider'] ?? '---'),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(Icons.phone_outlined, 'Teléfono', _profile?['cssi_contributors']?['telefono'] ?? '---'),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(Icons.phone_android_outlined, 'Teléfono celular', _profile?['cssi_contributors']?['celular'] ?? '---'),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(Icons.email_outlined, 'Correo', Supabase.instance.client.auth.currentUser?.email ?? '---'),
+                          ] else ...[
+                            const Center(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: 20),
+                                child: Text(
+                                  'Sin datos de colaborador vinculados',
+                                  style: TextStyle(color: Colors.blueGrey, fontStyle: FontStyle.italic),
+                                ),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 24),
                           Divider(color: Colors.grey[200]),
                           const SizedBox(height: 16),
