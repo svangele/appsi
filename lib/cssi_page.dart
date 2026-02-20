@@ -538,7 +538,8 @@ class _CssiPageState extends State<CssiPage> {
                     ],
                   ),
                 ),
-              ],
+                ],
+              ),
             );
           },
         ),
