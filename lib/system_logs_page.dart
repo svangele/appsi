@@ -48,7 +48,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(24),
-          color: theme.colorScheme.primary.withOpacity(0.05),
+          color: theme.colorScheme.primary.withValues(alpha: 0.05),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

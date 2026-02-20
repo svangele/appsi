@@ -69,7 +69,7 @@ class _UserDashboardState extends State<UserDashboard> {
                         ),
                         child: CircleAvatar(
                           radius: 60,
-                          backgroundColor: theme.colorScheme.secondary.withOpacity(0.2),
+                          backgroundColor: theme.colorScheme.secondary.withValues(alpha: 0.2),
                           child: Icon(Icons.person, size: 60, color: theme.colorScheme.secondary),
                         ),
                       ),
@@ -85,7 +85,7 @@ class _UserDashboardState extends State<UserDashboard> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -290,31 +290,37 @@ class _UserDashboardState extends State<UserDashboard> {
                                     UserAttributes(password: newPasswordController.text),
                                   );
 
-                                                                    if (mounted) {
-                                    setDialogState(() => isLoading = false);
-                                    Navigator.of(context).pop();
-                                    Future.delayed(const Duration(milliseconds: 300), () {
-                                      if (mounted) {
-                                        showDialog(
-                                          context: context,
-                                          barrierDismissible: false,
-                                          builder: (context) => AlertDialog(
-                                            title: const Text('Contraseña Actualizada'),
-                                            content: const Text('Tu contraseña ha sido cambiada correctamente. Inicia sesión nuevamente con tu nueva contraseña.'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () async {
-                                                  await Supabase.instance.client.auth.signOut();
-                                                  if (context.mounted) Navigator.pop(context);
-                                                },
-                                                child: const Text('ACEPTAR'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      }
-                                    });
-                                  }
+                                    if (mounted) {
+                                      setDialogState(() => isLoading = false);
+                                      // First close the password change dialog
+                                      Navigator.pop(context);
+                                      
+                                      // Wait a bit for the pop animation to finish before showing the success dialog
+                                      Future.delayed(const Duration(milliseconds: 200), () {
+                                        if (mounted) {
+                                          showDialog(
+                                            context: context,
+                                            barrierDismissible: false,
+                                            builder: (dialogContext) => AlertDialog(
+                                              title: const Text('Contraseña Actualizada'),
+                                              content: const Text('Tu contraseña ha sido cambiada correctamente. Debes iniciar sesión nuevamente con tu nueva contraseña.'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () async {
+                                                    await Supabase.instance.client.auth.signOut();
+                                                    // Redirection will be handled by the AuthRouter in main.dart
+                                                    if (dialogContext.mounted) {
+                                                      Navigator.of(dialogContext).pop();
+                                                    }
+                                                  },
+                                                  child: const Text('ACEPTAR'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }
+                                      });
+                                    }
                                 } catch (e) {
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(

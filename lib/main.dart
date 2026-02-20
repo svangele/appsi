@@ -112,12 +112,15 @@ class _AuthRouterState extends State<AuthRouter> {
   }
 
   Future<void> _fetchRole() async {
+    final userId = _user?.id;
+    if (userId == null) return;
+
     setState(() => _isLoading = true);
     try {
       final data = await Supabase.instance.client
           .from('profiles')
           .select('role')
-          .eq('id', _user!.id)
+          .eq('id', userId)
           .single();
       if (mounted) {
         setState(() {
