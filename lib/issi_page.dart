@@ -162,214 +162,216 @@ class _IssiPageState extends State<IssiPage> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                DropdownButtonFormField<String>(
-                  value: selectedUsuarioId,
-                  decoration: const InputDecoration(
-                    labelText: 'Usuario *',
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
-                  isExpanded: true,
-                  items: _usuarios.map((u) => DropdownMenuItem(
-                    value: u['id'] as String,
-                    child: Text(u['full_name'] ?? 'Usuario'),
-                  )).toList(),
-                  onChanged: (val) {
-                    final usuario = _usuarios.firstWhere((u) => u['id'] == val);
-                    setDialogState(() {
-                      selectedUsuarioId = val;
-                      selectedUsuarioNombre = usuario['full_name'];
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: ubicacionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Ubicación *',
-                    prefixIcon: Icon(Icons.location_on_outlined),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: tipo,
-                  decoration: const InputDecoration(
-                    labelText: 'Tipo *',
-                    prefixIcon: Icon(Icons.devices_outlined),
-                  ),
-                  isExpanded: true,
-                  items: _tipos.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                  onChanged: (val) => setDialogState(() => tipo = val!),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: marcaController,
-                  decoration: const InputDecoration(
-                    labelText: 'Marca *',
-                    prefixIcon: Icon(Icons.business_outlined),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: modeloController,
-                  decoration: const InputDecoration(
-                    labelText: 'Modelo *',
-                    prefixIcon: Icon(Icons.label_outlined),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: nsController,
-                  decoration: const InputDecoration(
-                    labelText: 'N/S',
-                    prefixIcon: Icon(Icons.numbers),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: imeiController,
-                  decoration: const InputDecoration(
-                    labelText: 'IMEI',
-                    prefixIcon: Icon(Icons.sim_card_outlined),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: cpuController,
-                        decoration: const InputDecoration(
-                          labelText: 'CPU',
-                          prefixIcon: Icon(Icons.memory),
-                        ),
+                    DropdownButtonFormField<String>(
+                      value: selectedUsuarioId,
+                      decoration: const InputDecoration(
+                        labelText: 'Usuario *',
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
+                      isExpanded: true,
+                      items: _usuarios.map((u) => DropdownMenuItem(
+                        value: u['id'] as String,
+                        child: Text(u['full_name'] ?? 'Usuario'),
+                      )).toList(),
+                      onChanged: (val) {
+                        final usuario = _usuarios.firstWhere((u) => u['id'] == val);
+                        setDialogState(() {
+                          selectedUsuarioId = val;
+                          selectedUsuarioNombre = usuario['full_name'];
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: ubicacionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Ubicación *',
+                        prefixIcon: Icon(Icons.location_on_outlined),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: ssdController,
-                        decoration: const InputDecoration(
-                          labelText: 'SSD',
-                          prefixIcon: Icon(Icons.storage),
-                        ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: tipo,
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo *',
+                        prefixIcon: Icon(Icons.devices_outlined),
                       ),
+                      isExpanded: true,
+                      items: _tipos.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                      onChanged: (val) => setDialogState(() => tipo = val!),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: marcaController,
+                      decoration: const InputDecoration(
+                        labelText: 'Marca *',
+                        prefixIcon: Icon(Icons.business_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: modeloController,
+                      decoration: const InputDecoration(
+                        labelText: 'Modelo *',
+                        prefixIcon: Icon(Icons.label_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: nsController,
+                      decoration: const InputDecoration(
+                        labelText: 'N/S',
+                        prefixIcon: Icon(Icons.numbers),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: imeiController,
+                      decoration: const InputDecoration(
+                        labelText: 'IMEI',
+                        prefixIcon: Icon(Icons.sim_card_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: cpuController,
+                            decoration: const InputDecoration(
+                              labelText: 'CPU',
+                              prefixIcon: Icon(Icons.memory),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: ssdController,
+                            decoration: const InputDecoration(
+                              labelText: 'SSD',
+                              prefixIcon: Icon(Icons.storage),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: ramController,
+                            decoration: const InputDecoration(
+                              labelText: 'RAM',
+                              prefixIcon: Icon(Icons.sd_card),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: valorController,
+                            decoration: const InputDecoration(
+                              labelText: 'Valor',
+                              prefixIcon: Icon(Icons.attach_money),
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: condicion,
+                      decoration: const InputDecoration(
+                        labelText: 'Condición *',
+                        prefixIcon: Icon(Icons.health_and_safety_outlined),
+                      ),
+                      isExpanded: true,
+                      items: _condiciones.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                      onChanged: (val) => setDialogState(() => condicion = val!),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: observacionesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Observaciones',
+                        prefixIcon: Icon(Icons.notes_outlined),
+                      ),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('CANCELAR'),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (ubicacionController.text.isEmpty || marcaController.text.isEmpty || 
+                                  modeloController.text.isEmpty || selectedUsuarioId == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Completa los campos obligatorios (*)')),
+                                );
+                                return;
+                              }
+
+                              try {
+                                final data = {
+                                  'ubicacion': ubicacionController.text.trim(),
+                                  'tipo': tipo,
+                                  'marca': marcaController.text.trim(),
+                                  'modelo': modeloController.text.trim(),
+                                  'n_s': nsController.text.trim().isEmpty ? null : nsController.text.trim(),
+                                  'imei': imeiController.text.trim().isEmpty ? null : imeiController.text.trim(),
+                                  'cpu': cpuController.text.trim().isEmpty ? null : cpuController.text.trim(),
+                                  'ssd': ssdController.text.trim().isEmpty ? null : ssdController.text.trim(),
+                                  'ram': ramController.text.trim().isEmpty ? null : ramController.text.trim(),
+                                  'valor': valorController.text.trim().isEmpty ? null : double.tryParse(valorController.text.trim()),
+                                  'condicion': condicion,
+                                  'observaciones': observacionesController.text.trim().isEmpty ? null : observacionesController.text.trim(),
+                                  'usuario_id': selectedUsuarioId,
+                                  'usuario_nombre': selectedUsuarioNombre,
+                                };
+
+                                if (isEditing) {
+                                  await Supabase.instance.client.from('issi_inventory').update(data).eq('id', item['id']);
+                                } else {
+                                  await Supabase.instance.client.from('issi_inventory').insert(data);
+                                }
+
+                                if (mounted) {
+                                  Navigator.pop(context);
+                                  _fetchItems();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(isEditing ? 'Elemento actualizado' : 'Elemento creado con éxito'),
+                                      backgroundColor: const Color(0xFFB1CB34),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                                  );
+                                }
+                              }
+                            },
+                            child: Text(isEditing ? 'GUARDAR' : 'CREAR'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: ramController,
-                        decoration: const InputDecoration(
-                          labelText: 'RAM',
-                          prefixIcon: Icon(Icons.sd_card),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: valorController,
-                        decoration: const InputDecoration(
-                          labelText: 'Valor',
-                          prefixIcon: Icon(Icons.attach_money),
-                        ),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: condicion,
-                  decoration: const InputDecoration(
-                    labelText: 'Condición *',
-                    prefixIcon: Icon(Icons.health_and_safety_outlined),
-                  ),
-                  isExpanded: true,
-                  items: _condiciones.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                  onChanged: (val) => setDialogState(() => condicion = val!),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: observacionesController,
-                  decoration: const InputDecoration(
-                    labelText: 'Observaciones',
-                    prefixIcon: Icon(Icons.notes_outlined),
-                  ),
-                  maxLines: 2,
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('CANCELAR'),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          if (ubicacionController.text.isEmpty || marcaController.text.isEmpty || 
-                              modeloController.text.isEmpty || selectedUsuarioId == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Completa los campos obligatorios (*)')),
-                            );
-                            return;
-                          }
-
-                          try {
-                            final data = {
-                              'ubicacion': ubicacionController.text.trim(),
-                              'tipo': tipo,
-                              'marca': marcaController.text.trim(),
-                              'modelo': modeloController.text.trim(),
-                              'n_s': nsController.text.trim().isEmpty ? null : nsController.text.trim(),
-                              'imei': imeiController.text.trim().isEmpty ? null : imeiController.text.trim(),
-                              'cpu': cpuController.text.trim().isEmpty ? null : cpuController.text.trim(),
-                              'ssd': ssdController.text.trim().isEmpty ? null : ssdController.text.trim(),
-                              'ram': ramController.text.trim().isEmpty ? null : ramController.text.trim(),
-                              'valor': valorController.text.trim().isEmpty ? null : double.tryParse(valorController.text.trim()),
-                              'condicion': condicion,
-                              'observaciones': observacionesController.text.trim().isEmpty ? null : observacionesController.text.trim(),
-                              'usuario_id': selectedUsuarioId,
-                              'usuario_nombre': selectedUsuarioNombre,
-                            };
-
-                            if (isEditing) {
-                              await Supabase.instance.client.from('issi_inventory').update(data).eq('id', item['id']);
-                            } else {
-                              await Supabase.instance.client.from('issi_inventory').insert(data);
-                            }
-
-                            if (mounted) {
-                              Navigator.pop(context);
-                              _fetchItems();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(isEditing ? 'Elemento actualizado' : 'Elemento creado con éxito'),
-                                  backgroundColor: const Color(0xFFB1CB34),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-                              );
-                            }
-                          }
-                        },
-                        child: Text(isEditing ? 'GUARDAR' : 'CREAR'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
         ),
