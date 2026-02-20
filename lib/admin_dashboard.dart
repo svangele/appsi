@@ -40,17 +40,55 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Future<void> _deleteUser(String id) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar Usuario'),
-        content: const Text('¿Estás seguro de que deseas eliminar este perfil? Esta acción no se puede deshacer.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCELAR')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('ELIMINAR'),
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        child: Container(
+          width: double.maxFinite,
+          constraints: const BoxConstraints(maxWidth: 400),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 32),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Eliminar Usuario',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '¿Estás seguro de que deseas eliminar este perfil? Esta acción no se puede deshacer.',
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('CANCELAR'),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('ELIMINAR'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
 
@@ -82,83 +120,117 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(isEditing ? 'Editar Usuario' : 'Crear Nuevo Usuario'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (!isEditing) ...[
-                  TextField(
-                    controller: emailController,
-                    decoration: const InputDecoration(labelText: 'Correo Electrónico', prefixIcon: Icon(Icons.email)),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: passwordController,
-                    decoration: const InputDecoration(labelText: 'Contraseña', prefixIcon: Icon(Icons.lock)),
-                    obscureText: true,
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Nombre Completo', prefixIcon: Icon(Icons.person)),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: role,
-                  decoration: const InputDecoration(labelText: 'Rol del Sistema', prefixIcon: Icon(Icons.admin_panel_settings)),
-                  items: const [
-                    DropdownMenuItem(value: 'usuario', child: Text('Usuario')),
-                    DropdownMenuItem(value: 'admin', child: Text('Administrador')),
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        child: StatefulBuilder(
+          builder: (context, setDialogState) => Container(
+            width: double.maxFinite,
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          isEditing ? 'Editar Usuario' : 'Crear Nuevo Usuario',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    if (!isEditing) ...[
+                      TextField(
+                        controller: emailController,
+                        decoration: const InputDecoration(labelText: 'Correo Electrónico', prefixIcon: Icon(Icons.email)),
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: passwordController,
+                        decoration: const InputDecoration(labelText: 'Contraseña', prefixIcon: Icon(Icons.lock)),
+                        obscureText: true,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(labelText: 'Nombre Completo', prefixIcon: Icon(Icons.person)),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: role,
+                      decoration: const InputDecoration(labelText: 'Rol del Sistema', prefixIcon: Icon(Icons.admin_panel_settings)),
+                      isExpanded: true,
+                      items: const [
+                        DropdownMenuItem(value: 'usuario', child: Text('Usuario')),
+                        DropdownMenuItem(value: 'admin', child: Text('Administrador')),
+                      ],
+                      onChanged: (val) => setDialogState(() => role = val!),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('CANCELAR'),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              try {
+                                if (isEditing) {
+                                  await Supabase.instance.client.from('profiles').update({
+                                    'full_name': nameController.text.trim(),
+                                    'role': role,
+                                  }).eq('id', user['id']);
+                                } else {
+                                  await Supabase.instance.client.rpc('create_user_admin', params: {
+                                    'email': emailController.text.trim(),
+                                    'password': passwordController.text.trim(),
+                                    'full_name': nameController.text.trim(),
+                                    'user_role': role,
+                                  });
+                                }
+                                if (mounted) {
+                                  Navigator.pop(context);
+                                  _fetchUsers();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(isEditing ? 'Usuario actualizado' : 'Usuario creado con éxito'),
+                                      backgroundColor: const Color(0xFFB1CB34),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                                  );
+                                }
+                              }
+                            },
+                            child: Text(isEditing ? 'GUARDAR' : 'CREAR'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
-                  onChanged: (val) => setDialogState(() => role = val!),
                 ),
-              ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCELAR')),
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  if (isEditing) {
-                    await Supabase.instance.client.from('profiles').update({
-                      'full_name': nameController.text.trim(),
-                      'role': role,
-                    }).eq('id', user['id']);
-                  } else {
-                    await Supabase.instance.client.rpc('create_user_admin', params: {
-                      'email': emailController.text.trim(),
-                      'password': passwordController.text.trim(),
-                      'full_name': nameController.text.trim(),
-                      'user_role': role,
-                    });
-                  }
-                  if (mounted) {
-                    Navigator.pop(context);
-                    _fetchUsers();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(isEditing ? 'Usuario actualizado' : 'Usuario creado con éxito'),
-                        backgroundColor: const Color(0xFFB1CB34),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-                    );
-                  }
-                }
-              },
-              child: Text(isEditing ? 'GUARDAR' : 'CREAR'),
-            ),
-          ],
         ),
       ),
     );
