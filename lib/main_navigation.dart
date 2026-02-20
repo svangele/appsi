@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'user_dashboard.dart';
 import 'admin_dashboard.dart';
 import 'system_logs_page.dart';
+import 'issi_page.dart';
 
 class MainNavigation extends StatefulWidget {
   final String role;
@@ -20,6 +21,7 @@ class _MainNavigationState extends State<MainNavigation> {
       return [
         const UserDashboard(),
         const AdminDashboard(),
+        const IssiPage(),
         const SystemLogsPage(),
       ];
     }
@@ -58,6 +60,11 @@ class _MainNavigationState extends State<MainNavigation> {
               label: 'Usuarios',
             ),
             const BottomNavigationBarItem(
+              icon: Icon(Icons.inventory_2_outlined),
+              activeIcon: Icon(Icons.inventory_2),
+              label: 'ISSI',
+            ),
+            const BottomNavigationBarItem(
               icon: Icon(Icons.assignment_outlined),
               activeIcon: Icon(Icons.assignment),
               label: 'Logs',
@@ -74,6 +81,8 @@ class _MainNavigationState extends State<MainNavigation> {
       case 1:
         return 'Gestión de Usuarios';
       case 2:
+        return 'Inventario ISSI';
+      case 3:
         return 'Logs del Sistema';
       default:
         return 'Mi Perfil';
