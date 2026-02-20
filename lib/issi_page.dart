@@ -434,7 +434,13 @@ class _IssiPageState extends State<IssiPage> {
         final ubicacion = (item['ubicacion'] ?? '').toString().toLowerCase();
         final usuario = (item['usuario_nombre'] ?? '').toString().toLowerCase();
         final ns = (item['n_s'] ?? '').toString().toLowerCase();
-        return marca.contains(query) || modelo.contains(query) || ubicacion.contains(query) || usuario.contains(query) || ns.contains(query);
+        final imei = (item['imei'] ?? '').toString().toLowerCase();
+        return marca.contains(query) || 
+               modelo.contains(query) || 
+               ubicacion.contains(query) || 
+               usuario.contains(query) || 
+               ns.contains(query) ||
+               imei.contains(query);
       }).toList();
     }
     if (_filterTipo != null) {
@@ -567,7 +573,7 @@ class _IssiPageState extends State<IssiPage> {
                 TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Buscar por marca, modelo, ubicación...',
+                    hintText: 'Buscar por marca, modelo, N/S, ubicación...',
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
