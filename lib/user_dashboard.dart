@@ -281,15 +281,8 @@ class _UserDashboardState extends State<UserDashboard> {
                                   );
 
                                   if (mounted) {
-                                    final scaffoldMessenger = ScaffoldMessenger.of(context);
-                                    Navigator.pop(context);
                                     await Supabase.instance.client.auth.signOut();
-                                    scaffoldMessenger.showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Contraseña actualizada correctamente'),
-                                        backgroundColor: Color(0xFFB1CB34),
-                                      ),
-                                    );
+                                    Navigator.of(context).popUntil((route) => route.isFirst);
                                   }
                                 } catch (e) {
                                   if (mounted) {
@@ -299,9 +292,6 @@ class _UserDashboardState extends State<UserDashboard> {
                                         backgroundColor: Colors.red,
                                       ),
                                     );
-                                  }
-                                } finally {
-                                  if (mounted) {
                                     setDialogState(() => isLoading = false);
                                   }
                                 }
