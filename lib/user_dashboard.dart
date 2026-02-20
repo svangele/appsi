@@ -288,6 +288,7 @@ class _UserDashboardState extends State<UserDashboard> {
                                         backgroundColor: Color(0xFFB1CB34),
                                       ),
                                     );
+                                    await Supabase.instance.client.auth.signOut();
                                   }
                                 } catch (e) {
                                   if (mounted) {
