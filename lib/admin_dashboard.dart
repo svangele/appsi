@@ -129,6 +129,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   void _showUserForm({Map<String, dynamic>? user}) {
     final isEditing = user != null;
+    final theme = Theme.of(context);
     final nameController = TextEditingController(text: user?['full_name']);
     final employeeNumberController = TextEditingController(text: user?['numero_empleado']);
     final emailController = TextEditingController(text: user?['email']);
@@ -356,7 +357,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       secondary: Icon(icon, size: 20),
       value: permissions[key] ?? false,
       onChanged: (val) => setDialogState(() => permissions[key] = val ?? false),
-      controlType: ListTileControlType.trailing,
       dense: true,
       contentPadding: EdgeInsets.zero,
     );
