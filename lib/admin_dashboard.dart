@@ -129,6 +129,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   void _showUserForm({Map<String, dynamic>? user}) {
     final isEditing = user != null;
+    final nameController = TextEditingController(text: user?['full_name']);
+    final employeeNumberController = TextEditingController(text: user?['numero_empleado']);
     final emailController = TextEditingController(text: user?['email']);
     final passwordController = TextEditingController();
     String role = user?['role'] ?? 'usuario';

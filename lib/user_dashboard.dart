@@ -77,10 +77,10 @@ class _UserDashboardState extends State<UserDashboard> {
                         child: CircleAvatar(
                           radius: 60,
                           backgroundColor: theme.colorScheme.secondary.withValues(alpha: 0.2),
-                          backgroundImage: (_profile?['cssi_contributors']?['foto_url'] != null && _profile?['cssi_contributors']?['foto_url'].toString().isNotEmpty)
+                          backgroundImage: (_profile?['cssi_contributors']?['foto_url'] != null && _profile?['cssi_contributors']?['foto_url'].toString().isNotEmpty == true)
                               ? NetworkImage(_profile!['cssi_contributors']!['foto_url'])
                               : null,
-                          child: (_profile?['cssi_contributors']?['foto_url'] == null || _profile?['cssi_contributors']?['foto_url'].toString().isEmpty)
+                          child: (_profile?['cssi_contributors']?['foto_url'] == null || _profile?['cssi_contributors']?['foto_url'].toString().isEmpty == true)
                               ? Icon(Icons.person, size: 60, color: theme.colorScheme.secondary)
                               : null,
                         ),
@@ -157,17 +157,6 @@ class _UserDashboardState extends State<UserDashboard> {
                             _buildInfoRow(Icons.phone_android_outlined, 'Teléfono celular', _profile?['cssi_contributors']?['celular'] ?? '---'),
                             const SizedBox(height: 12),
                             _buildInfoRow(Icons.email_outlined, 'Correo', Supabase.instance.client.auth.currentUser?.email ?? '---'),
-                          ] else ...[
-                            const Center(
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 20),
-                                child: Text(
-                                  'Sin datos de colaborador vinculados',
-                                  style: TextStyle(color: Colors.blueGrey, fontStyle: FontStyle.italic),
-                                ),
-                              ),
-                            ),
-                          ],
                           ] else ...[
                             const Center(
                               child: Padding(
