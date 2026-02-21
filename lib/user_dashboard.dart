@@ -77,7 +77,12 @@ class _UserDashboardState extends State<UserDashboard> {
                         child: CircleAvatar(
                           radius: 60,
                           backgroundColor: theme.colorScheme.secondary.withValues(alpha: 0.2),
-                          child: Icon(Icons.person, size: 60, color: theme.colorScheme.secondary),
+                          backgroundImage: (_profile?['cssi_contributors']?['foto_url'] != null && _profile?['cssi_contributors']?['foto_url'].toString().isNotEmpty)
+                              ? NetworkImage(_profile!['cssi_contributors']!['foto_url'])
+                              : null,
+                          child: (_profile?['cssi_contributors']?['foto_url'] == null || _profile?['cssi_contributors']?['foto_url'].toString().isEmpty)
+                              ? Icon(Icons.person, size: 60, color: theme.colorScheme.secondary)
+                              : null,
                         ),
                       ),
                     ),
@@ -163,19 +168,17 @@ class _UserDashboardState extends State<UserDashboard> {
                               ),
                             ),
                           ],
-                          const SizedBox(height: 24),
-                          Divider(color: Colors.grey[200]),
-                          const SizedBox(height: 16),
-                          OutlinedButton.icon(
-                            onPressed: () => _showChangePasswordDialog(),
-                            icon: const Icon(Icons.lock_outline),
-                            label: const Text('CAMBIAR CONTRASEÑA'),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 45),
+                          ] else ...[
+                            const Center(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: 20),
+                                child: Text(
+                                  'Sin datos de colaborador vinculados',
+                                  style: TextStyle(color: Colors.blueGrey, fontStyle: FontStyle.italic),
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildInfoRow(Icons.calendar_today, 'Miembro desde', _profile?['created_at'].toString().split('T')[0] ?? '---'),
+                          ],
                         ],
                       ),
                     ),
@@ -184,16 +187,30 @@ class _UserDashboardState extends State<UserDashboard> {
                 const SizedBox(height: 24),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: OutlinedButton.icon(
-                    onPressed: () => Supabase.instance.client.auth.signOut(),
-                    icon: const Icon(Icons.logout_rounded),
-                    label: const Text('CERRAR SESIÓN'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.redAccent,
-                      side: const BorderSide(color: Colors.redAccent),
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
+                  child: Column(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () => _showChangePasswordDialog(),
+                        icon: const Icon(Icons.lock_outline),
+                        label: const Text('CAMBIAR CONTRASEÑA'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: () => Supabase.instance.client.auth.signOut(),
+                        icon: const Icon(Icons.logout_rounded),
+                        label: const Text('CERRAR SESIÓN'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.redAccent,
+                          side: const BorderSide(color: Colors.redAccent),
+                          minimumSize: const Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 40),
