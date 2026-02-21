@@ -129,12 +129,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   void _showUserForm({Map<String, dynamic>? user}) {
     final isEditing = user != null;
-    final nameController = TextEditingController(text: user?['full_name']);
-    final employeeNumberController = TextEditingController(text: user?['numero_empleado']);
-    final emailController = TextEditingController();
+    final emailController = TextEditingController(text: user?['email']);
     final passwordController = TextEditingController();
     String role = user?['role'] ?? 'usuario';
     String? selectedCssiId = user?['cssi_id'];
+    bool isBlocked = user?['is_blocked'] ?? false;
 
     showDialog(
       context: context,
@@ -165,20 +164,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    if (!isEditing) ...[
                       TextField(
                         controller: emailController,
                         decoration: const InputDecoration(labelText: 'Correo Electrónico', prefixIcon: Icon(Icons.email)),
                         keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 16),
-                      TextField(
-                        controller: passwordController,
-                        decoration: const InputDecoration(labelText: 'Contraseña', prefixIcon: Icon(Icons.lock)),
-                        obscureText: true,
-                      ),
-                      const SizedBox(height: 16),
-                    ],
+                      if (!isEditing) ...[
+                        TextField(
+                          controller: passwordController,
+                          decoration: const InputDecoration(labelText: 'Contraseña', prefixIcon: Icon(Icons.lock)),
+                          obscureText: true,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                     TextField(
                       controller: nameController,
                       decoration: const InputDecoration(labelText: 'Nombre Completo', prefixIcon: Icon(Icons.person)),
@@ -233,6 +232,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ],
                       onChanged: (val) => setDialogState(() => role = val!),
                     ),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      title: const Text('Estado de la Cuenta'),
+                      subtitle: Text(isBlocked ? 'BLOQUEADA' : 'ACTIVA'),
+                      secondary: Icon(isBlocked ? Icons.block : Icons.check_circle, color: isBlocked ? Colors.red : Colors.green),
+                      value: !isBlocked,
+                      onChanged: (val) => setDialogState(() => isBlocked = !val),
+                    ),
                     const SizedBox(height: 24),
                     Row(
                       children: [
@@ -262,12 +269,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               }
                               try {
                                 if (isEditing) {
-                                  await Supabase.instance.client.from('profiles').update({
-                                    'full_name': nameController.text.trim(),
-                                    'role': role,
-                                    'cssi_id': selectedCssiId,
-                                    'numero_empleado': employeeNumberController.text.trim(),
-                                  }).eq('id', user['id']);
+                                  await Supabase.instance.client.rpc('update_user_admin', params: {
+                                    'user_id_param': user['id'],
+                                    'new_email': emailController.text.trim(),
+                                    'new_full_name': nameController.text.trim(),
+                                    'new_role': role,
+                                    'new_cssi_id': selectedCssiId,
+                                    'new_numero_empleado': employeeNumberController.text.trim(),
+                                    'is_blocked_param': isBlocked,
+                                  });
                                 } else {
                                   // 1. Create the user via RPC
                                   final response = await Supabase.instance.client.rpc('create_user_admin', params: {
@@ -467,30 +477,55 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             ),
                             title: Text(
                               '${user['numero_empleado'] != null ? '${user['numero_empleado']} | ' : ''}${user['full_name'] ?? 'Usuario sin nombre'}',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                decoration: (user['is_blocked'] ?? false) ? TextDecoration.lineThrough : null,
+                                color: (user['is_blocked'] ?? false) ? Colors.grey : null,
+                              ),
                             ),
                             subtitle: Padding(
                               padding: const EdgeInsets.only(top: 4.0),
-                              child: Row(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: role == 'admin' 
-                                          ? theme.colorScheme.tertiary.withValues(alpha: 0.1)
-                                          : theme.colorScheme.primary.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      role.toUpperCase(),
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: role == 'admin' 
-                                            ? theme.colorScheme.tertiary 
-                                            : theme.colorScheme.primary,
+                                  Text(user['email'] ?? 'Sin correo', style: const TextStyle(fontSize: 12)),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: role == 'admin' 
+                                              ? theme.colorScheme.tertiary.withValues(alpha: 0.1)
+                                              : theme.colorScheme.primary.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          role.toUpperCase(),
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: role == 'admin' 
+                                                ? theme.colorScheme.tertiary 
+                                                : theme.colorScheme.primary,
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                      if (user['is_blocked'] ?? false) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: const Text(
+                                            'BLOQUEADO',
+                                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ],
                               ),

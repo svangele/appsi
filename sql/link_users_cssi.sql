@@ -70,18 +70,25 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 2. DISPARADOR DE PERFILES (Seguro y Sincronizado)
 -- Crea o actualiza el perfil público cuando nace un usuario en auth.
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT false;
+
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, role)
+  INSERT INTO public.profiles (id, full_name, role, email, is_blocked)
   VALUES (
     new.id, 
     COALESCE(new.raw_user_meta_data->>'full_name', 'Nuevo Usuario'), 
-    (COALESCE(new.raw_user_meta_data->>'role', 'usuario'))::user_role
+    (COALESCE(new.raw_user_meta_data->>'role', 'usuario'))::user_role,
+    new.email,
+    (new.banned_until IS NOT NULL AND new.banned_until > now())
   )
   ON CONFLICT (id) DO UPDATE SET
     full_name = EXCLUDED.full_name,
-    role = EXCLUDED.role;
+    role = EXCLUDED.role,
+    email = EXCLUDED.email,
+    is_blocked = EXCLUDED.is_blocked;
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -92,7 +99,6 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- 3. FUNCIÓN DE SEGURIDAD (No Recursiva)
--- Basada en JWT para evitar el error "Database error querying schema".
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean AS $$
 BEGIN
@@ -100,5 +106,54 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 4. REFRESCAR SISTEMA
+-- 4. FUNCIÓN DE ACTUALIZACIÓN DE USUARIO (Edición y Bloqueo)
+CREATE OR REPLACE FUNCTION public.update_user_admin(
+  user_id_param uuid,
+  new_email text,
+  new_full_name text,
+  new_role text,
+  new_cssi_id uuid DEFAULT NULL,
+  new_numero_empleado text DEFAULT NULL,
+  is_blocked_param boolean DEFAULT false
+)
+RETURNS void AS $$
+BEGIN
+  -- A. Actualizar auth.users
+  UPDATE auth.users
+  SET 
+    email = LOWER(new_email),
+    raw_user_meta_data = raw_user_meta_data || 
+      jsonb_build_object(
+        'full_name', new_full_name,
+        'role', new_role,
+        'email', LOWER(new_email)
+      ),
+    updated_at = now(),
+    banned_until = CASE WHEN is_blocked_param THEN '3000-01-01 00:00:00+00'::timestamptz ELSE NULL END
+  WHERE id = user_id_param;
+
+  -- B. Actualizar public.profiles (El trigger NO se dispara en UPDATE de auth.users por defecto)
+  UPDATE public.profiles
+  SET
+    full_name = new_full_name,
+    role = new_role::user_role,
+    email = LOWER(new_email),
+    cssi_id = new_cssi_id,
+    numero_empleado = new_numero_empleado,
+    is_blocked = is_blocked_param
+  WHERE id = user_id_param;
+
+  -- C. Actualizar identidades
+  UPDATE auth.identities
+  SET identity_data = identity_data || jsonb_build_object('email', LOWER(new_email))
+  WHERE user_id = user_id_param AND provider = 'email';
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Sincronizar datos existentes
+UPDATE public.profiles p
+SET email = u.email, is_blocked = (u.banned_until IS NOT NULL AND u.banned_until > now())
+FROM auth.users u
+WHERE p.id = u.id;
+
 NOTIFY pgrst, 'reload schema';
