@@ -102,16 +102,17 @@ class _AuthRouterState extends State<AuthRouter> {
           _user = session?.user;
           if (_user == null) {
             _role = null;
+            _permissions = null;
             _isLoading = false;
           } else {
-            _fetchRole();
+            _fetchData();
           }
         });
       }
     });
   }
 
-  Future<void> _fetchRole() async {
+  Future<void> _fetchData() async {
     final userId = _user?.id;
     if (userId == null) return;
 
@@ -119,23 +120,29 @@ class _AuthRouterState extends State<AuthRouter> {
     try {
       final data = await Supabase.instance.client
           .from('profiles')
-          .select('role')
+          .select('role, permissions')
           .eq('id', userId)
           .single();
       if (mounted) {
         setState(() {
           _role = data['role'];
+          _permissions = data['permissions'] as Map<String, dynamic>?;
           _isLoading = false;
         });
       }
     } catch (e) {
-      debugPrint('Error obteniendo rol: $e');
+      debugPrint('Error obteniendo datos: $e');
       if (mounted) {
-        setState(() => _role = 'usuario'); // Role fallback
-        setState(() => _isLoading = false);
+        setState(() {
+          _role = 'usuario';
+          _permissions = null;
+          _isLoading = false;
+        });
       }
     }
   }
+
+  Map<String, dynamic>? _permissions;
 
   @override
   Widget build(BuildContext context) {
@@ -147,7 +154,10 @@ class _AuthRouterState extends State<AuthRouter> {
       return const LoginPage();
     }
 
-    // Now everything returns MainNavigation, it handles the logic internall
-    return MainNavigation(role: _role ?? 'usuario');
+    // Now everything returns MainNavigation, it handles the logic internally
+    return MainNavigation(
+      role: _role ?? 'usuario',
+      permissions: _permissions ?? {},
+    );
   }
 }

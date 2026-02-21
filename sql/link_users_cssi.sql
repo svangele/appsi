@@ -72,17 +72,32 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Crea o actualiza el perfil público cuando nace un usuario en auth.
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT false;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS permissions JSONB DEFAULT '{
+  "show_users": false, 
+  "show_issi": false, 
+  "show_cssi": false, 
+  "show_logs": false
+}'::jsonb;
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
+DECLARE
+  is_admin_user boolean;
 BEGIN
-  INSERT INTO public.profiles (id, full_name, role, email, is_blocked)
+  is_admin_user := (COALESCE(new.raw_user_meta_data->>'role', 'usuario') = 'admin');
+
+  INSERT INTO public.profiles (id, full_name, role, email, is_blocked, permissions)
   VALUES (
     new.id, 
     COALESCE(new.raw_user_meta_data->>'full_name', 'Nuevo Usuario'), 
     (COALESCE(new.raw_user_meta_data->>'role', 'usuario'))::user_role,
     new.email,
-    (new.banned_until IS NOT NULL AND new.banned_until > now())
+    (new.banned_until IS NOT NULL AND new.banned_until > now()),
+    -- Si es admin, le damos todos los permisos por defecto
+    CASE 
+      WHEN is_admin_user THEN '{"show_users": true, "show_issi": true, "show_cssi": true, "show_logs": true}'::jsonb
+      ELSE '{"show_users": false, "show_issi": false, "show_cssi": false, "show_logs": false}'::jsonb
+    END
   )
   ON CONFLICT (id) DO UPDATE SET
     full_name = EXCLUDED.full_name,
@@ -106,7 +121,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 4. FUNCIÓN DE ACTUALIZACIÓN DE USUARIO (Edición y Bloqueo)
+-- 4. FUNCIÓN DE ACTUALIZACIÓN DE USUARIO (Edición, Bloqueo y Permisos)
 CREATE OR REPLACE FUNCTION public.update_user_admin(
   user_id_param uuid,
   new_email text,
@@ -114,7 +129,8 @@ CREATE OR REPLACE FUNCTION public.update_user_admin(
   new_role text,
   new_cssi_id uuid DEFAULT NULL,
   new_numero_empleado text DEFAULT NULL,
-  is_blocked_param boolean DEFAULT false
+  is_blocked_param boolean DEFAULT false,
+  new_permissions jsonb DEFAULT NULL
 )
 RETURNS void AS $$
 BEGIN
@@ -132,7 +148,7 @@ BEGIN
     banned_until = CASE WHEN is_blocked_param THEN '3000-01-01 00:00:00+00'::timestamptz ELSE NULL END
   WHERE id = user_id_param;
 
-  -- B. Actualizar public.profiles (El trigger NO se dispara en UPDATE de auth.users por defecto)
+  -- B. Actualizar public.profiles
   UPDATE public.profiles
   SET
     full_name = new_full_name,
@@ -140,7 +156,8 @@ BEGIN
     email = LOWER(new_email),
     cssi_id = new_cssi_id,
     numero_empleado = new_numero_empleado,
-    is_blocked = is_blocked_param
+    is_blocked = is_blocked_param,
+    permissions = COALESCE(new_permissions, permissions)
   WHERE id = user_id_param;
 
   -- C. Actualizar identidades
@@ -150,9 +167,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Sincronizar datos existentes
+-- Sincronizar datos existentes y asignar permisos por defecto a admins
 UPDATE public.profiles p
-SET email = u.email, is_blocked = (u.banned_until IS NOT NULL AND u.banned_until > now())
+SET 
+  email = u.email, 
+  is_blocked = (u.banned_until IS NOT NULL AND u.banned_until > now()),
+  permissions = CASE 
+    WHEN p.role = 'admin' THEN '{"show_users": true, "show_issi": true, "show_cssi": true, "show_logs": true}'::jsonb
+    ELSE '{"show_users": false, "show_issi": false, "show_cssi": false, "show_logs": false}'::jsonb
+  END
 FROM auth.users u
 WHERE p.id = u.id;
 

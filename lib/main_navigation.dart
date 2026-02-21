@@ -8,7 +8,8 @@ import 'cssi_page.dart';
 
 class MainNavigation extends StatefulWidget {
   final String role;
-  const MainNavigation({super.key, required this.role});
+  final Map<String, dynamic> permissions;
+  const MainNavigation({super.key, required this.role, required this.permissions});
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
@@ -17,31 +18,71 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
-  List<Widget> get _pages {
-    if (widget.role == 'admin') {
-      return [
-        const UserDashboard(),
-        const AdminDashboard(),
-        const IssiPage(),
-        const CssiPage(),
-        const SystemLogsPage(),
-      ];
+  List<Map<String, dynamic>> get _availablePages {
+    final pages = <Map<String, dynamic>>[];
+    
+    // Perfil siempre disponible
+    pages.add({
+      'title': 'Mi Perfil',
+      'icon': Icons.person_outline,
+      'activeIcon': Icons.person,
+      'widget': const UserDashboard(),
+    });
+
+    if (widget.permissions['show_users'] == true) {
+      pages.add({
+        'title': 'Usuarios',
+        'icon': Icons.group_outlined,
+        'activeIcon': Icons.group,
+        'widget': const AdminDashboard(),
+      });
     }
-    return [
-      const UserDashboard(),
-    ];
+
+    if (widget.permissions['show_issi'] == true) {
+      pages.add({
+        'title': 'ISSI',
+        'icon': Icons.inventory_2_outlined,
+        'activeIcon': Icons.inventory_2,
+        'widget': const IssiPage(),
+      });
+    }
+
+    if (widget.permissions['show_cssi'] == true) {
+      pages.add({
+        'title': 'CSSI',
+        'icon': Icons.badge_outlined,
+        'activeIcon': Icons.badge,
+        'widget': const CssiPage(),
+      });
+    }
+
+    if (widget.permissions['show_logs'] == true) {
+      pages.add({
+        'title': 'Logs',
+        'icon': Icons.assignment_outlined,
+        'activeIcon': Icons.assignment,
+        'widget': const SystemLogsPage(),
+      });
+    }
+
+    return pages;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isAdmin = widget.role == 'admin';
+    final pages = _availablePages;
+    
+    // Safety check for index out of bounds if permissions change
+    if (_selectedIndex >= pages.length) {
+      _selectedIndex = 0;
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_getAppBarTitle()),
+        title: Text(pages[_selectedIndex]['title']),
       ),
-      body: _pages[_selectedIndex],
+      body: pages[_selectedIndex]['widget'],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
@@ -49,52 +90,12 @@ class _MainNavigationState extends State<MainNavigation> {
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
-        items: [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Mi Perfil',
-          ),
-          if (isAdmin) ...[
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.group_outlined),
-              activeIcon: Icon(Icons.group),
-              label: 'Usuarios',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.inventory_2_outlined),
-              activeIcon: Icon(Icons.inventory_2),
-              label: 'ISSI',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.badge_outlined),
-              activeIcon: Icon(Icons.badge),
-              label: 'CSSI',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.assignment_outlined),
-              activeIcon: Icon(Icons.assignment),
-              label: 'Logs',
-            ),
-          ],
-        ],
+        items: pages.map((p) => BottomNavigationBarItem(
+          icon: Icon(p['icon']),
+          activeIcon: Icon(p['activeIcon']),
+          label: p['title'],
+        )).toList(),
       ),
     );
-  }
-
-  String _getAppBarTitle() {
-    if (widget.role != 'admin') return 'App Sisol';
-    switch (_selectedIndex) {
-      case 1:
-        return 'Gestión de Usuarios';
-      case 2:
-        return 'Inventario ISSI';
-      case 3:
-        return 'Colaboradores CSSI';
-      case 4:
-        return 'Logs del Sistema';
-      default:
-        return 'Mi Perfil';
-    }
   }
 }

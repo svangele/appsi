@@ -136,6 +136,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
     String role = user?['role'] ?? 'usuario';
     String? selectedCssiId = user?['cssi_id'];
     bool isBlocked = user?['is_blocked'] ?? false;
+    final permissions = Map<String, bool>.from(user?['permissions'] ?? {
+      'show_users': false,
+      'show_issi': false,
+      'show_cssi': false,
+      'show_logs': false,
+    });
 
     showDialog(
       context: context,
@@ -243,6 +249,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       onChanged: (val) => setDialogState(() => isBlocked = !val),
                     ),
                     const SizedBox(height: 24),
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    Text('ACCESOS (VISIBILIDAD)', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                    const SizedBox(height: 16),
+                    _buildPermissionSwitch('Gestión de Usuarios', 'show_users', Icons.group, permissions, setDialogState),
+                    _buildPermissionSwitch('Inventario ISSI', 'show_issi', Icons.inventory_2, permissions, setDialogState),
+                    _buildPermissionSwitch('Colaboradores CSSI', 'show_cssi', Icons.badge, permissions, setDialogState),
+                    _buildPermissionSwitch('Logs del Sistema', 'show_logs', Icons.assignment, permissions, setDialogState),
+                    const SizedBox(height: 24),
                     Row(
                       children: [
                         Expanded(
@@ -279,6 +294,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     'new_cssi_id': selectedCssiId,
                                     'new_numero_empleado': employeeNumberController.text.trim(),
                                     'is_blocked_param': isBlocked,
+                                    'new_permissions': permissions,
                                   });
                                 } else {
                                   // 1. Create the user via RPC
@@ -331,6 +347,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPermissionSwitch(String title, String key, IconData icon, Map<String, bool> permissions, StateSetter setDialogState) {
+    return CheckboxListTile(
+      title: Text(title, style: const TextStyle(fontSize: 14)),
+      secondary: Icon(icon, size: 20),
+      value: permissions[key] ?? false,
+      onChanged: (val) => setDialogState(() => permissions[key] = val ?? false),
+      controlType: ListTileControlType.trailing,
+      dense: true,
+      contentPadding: EdgeInsets.zero,
     );
   }
 
@@ -527,22 +555,52 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                           ),
                                         ),
                                       ],
+                                      const SizedBox(width: 12),
+                                      // Permission Indicators
+                                      if (user['permissions'] != null) ...[
+                                        _buildMiniIcon(Icons.group, user['permissions']['show_users'] == true),
+                                        _buildMiniIcon(Icons.inventory_2, user['permissions']['show_issi'] == true),
+                                        _buildMiniIcon(Icons.badge, user['permissions']['show_cssi'] == true),
+                                        _buildMiniIcon(Icons.assignment, user['permissions']['show_logs'] == true),
+                                      ],
                                     ],
                                   ),
                                 ],
                               ),
                             ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined, color: Colors.blueGrey),
-                                  onPressed: () => _showUserForm(user: user),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                                  onPressed: () => _deleteUser(user['id']),
-                                ),
+                            trailing: PopupMenuButton<String>(
+                              onSelected: (value) async {
+                                if (value == 'edit') {
+                                  _showUserForm(user: user);
+                                } else if (value == 'delete') {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Eliminar Usuario'),
+                                      content: const Text('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.'),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCELAR')),
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, true),
+                                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                          child: const Text('ELIMINAR'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm == true) {
+                                    try {
+                                      await Supabase.instance.client.rpc('delete_user_admin', params: {'user_id_param': user['id']});
+                                      _fetchUsers();
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                                    }
+                                  }
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit_outlined), title: Text('Editar'), dense: true)),
+                                const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete_outline, color: Colors.red), title: Text('Eliminar', style: TextStyle(color: Colors.red)), dense: true)),
                               ],
                             ),
                           ),
@@ -553,6 +611,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildMiniIcon(IconData icon, bool active) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 4),
+      child: Icon(
+        icon,
+        size: 14,
+        color: active ? const Color(0xFF344092) : Colors.grey.withValues(alpha: 0.3),
+      ),
     );
   }
 }
