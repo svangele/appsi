@@ -573,6 +573,30 @@ class _CssiPageState extends State<CssiPage> {
     );
   }
 
+  Widget _buildStatusChip(String status, String prefix) {
+    Color color;
+    switch (status) {
+      case 'ACTIVO': color = Colors.green; break;
+      case 'BAJA': color = Colors.red; break;
+      case 'CAMBIO': color = Colors.orange; break;
+      case 'ELIMINAR': color = Colors.purple; break;
+      case 'REINGRESO': color = Colors.blue; break;
+      default: color = Colors.grey;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: BorderSide(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        '$prefix: $status',
+        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
   Widget _sectionTitle(String title) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -719,17 +743,37 @@ class _CssiPageState extends State<CssiPage> {
                                     : null,
                                 ),
                                 title: Text('${item['numero_empleado'] ?? '---'} | ${item['nombre']} ${item['paterno']}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                subtitle: Text('${item['puesto'] ?? 'Sin puesto'} - ${item['area'] ?? 'Sin área'}'),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                                subtitle: Row(
                                   children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit_outlined, color: Colors.blueGrey),
-                                      onPressed: () => _showForm(item: item),
+                                    _buildStatusChip(item['status_rh'] ?? 'ACTIVO', 'RH'),
+                                    const SizedBox(width: 8),
+                                    _buildStatusChip(item['status_sys'] ?? 'ACTIVO', 'SYS'),
+                                  ],
+                                ),
+                                trailing: PopupMenuButton<String>(
+                                  onSelected: (value) {
+                                    if (value == 'edit') {
+                                      _showForm(item: item);
+                                    } else if (value == 'delete') {
+                                      _deleteItem(item['id']);
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(
+                                      value: 'edit',
+                                      child: ListTile(
+                                        leading: Icon(Icons.edit_outlined),
+                                        title: Text('Editar'),
+                                        dense: true,
+                                      ),
                                     ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                                      onPressed: () => _deleteItem(item['id']),
+                                    const PopupMenuItem(
+                                      value: 'delete',
+                                      child: ListTile(
+                                        leading: Icon(Icons.delete_outline, color: Colors.red),
+                                        title: Text('Eliminar', style: TextStyle(color: Colors.red)),
+                                        dense: true,
+                                      ),
                                     ),
                                   ],
                                 ),
