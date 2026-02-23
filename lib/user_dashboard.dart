@@ -150,10 +150,6 @@ class _UserDashboardState extends State<UserDashboard> {
                           ),
                           const SizedBox(height: 24),
                           if (_profile?['cssi_contributors'] != null) ...[
-                            _buildInfoRow(Icons.settings_suggest_outlined, 'Status Sys', _profile?['cssi_contributors']?['status_sys'] ?? 'ACTIVO'),
-                            const SizedBox(height: 12),
-                            _buildInfoRow(Icons.assignment_ind_outlined, 'Status RH', _profile?['cssi_contributors']?['status_rh'] ?? 'ACTIVO'),
-                            const SizedBox(height: 12),
                             _buildInfoRow(Icons.numbers, 'Número de empleado', _profile?['cssi_contributors']?['numero_empleado'] ?? '---'),
                             const SizedBox(height: 12),
                             _buildInfoRow(Icons.fingerprint, 'CURP', _profile?['cssi_contributors']?['curp'] ?? '---'),

@@ -252,16 +252,6 @@ class _CssiPageState extends State<CssiPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        TextField(
-                          controller: numeroEmpleadoCtrl,
-                          decoration: const InputDecoration(labelText: 'Número de Empleado *', hintText: '4 dígitos'),
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(4),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
                         Row(
                           children: [
                             Expanded(
@@ -281,6 +271,16 @@ class _CssiPageState extends State<CssiPage> {
                                 onChanged: (v) => setDialogState(() => statusRh = v),
                               ),
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: numeroEmpleadoCtrl,
+                          decoration: const InputDecoration(labelText: 'Número de Empleado *', hintText: '4 dígitos'),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(4),
                           ],
                         ),
                         const SizedBox(height: 12),
