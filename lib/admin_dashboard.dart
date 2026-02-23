@@ -202,7 +202,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                       isExpanded: true,
                       // Now editable ONLY if selectedCssiId is NOT null
-                      items: ['ACTIVO', 'BAJA', 'CAMBIO'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                      items: ['ACTIVO', 'BAJA', 'CAMBIO', 'ELIMINAR'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
                       onChanged: selectedCssiId == null ? null : (val) => setDialogState(() => statusSys = val),
                     ),
                     const SizedBox(height: 24),
