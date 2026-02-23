@@ -5,6 +5,7 @@ import 'admin_dashboard.dart';
 import 'system_logs_page.dart';
 import 'issi_page.dart';
 import 'cssi_page.dart';
+import 'widgets/notification_bell.dart';
 
 class MainNavigation extends StatefulWidget {
   final String role;
@@ -81,6 +82,10 @@ class _MainNavigationState extends State<MainNavigation> {
     return Scaffold(
       appBar: AppBar(
         title: Text(pages[_selectedIndex]['title']),
+        actions: [
+          if (widget.role == 'admin')
+            const NotificationBell(),
+        ],
       ),
       body: pages[_selectedIndex]['widget'],
       bottomNavigationBar: BottomNavigationBar(
