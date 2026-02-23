@@ -535,6 +535,7 @@ class _IssiPageState extends State<IssiPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showItemForm(),
         backgroundColor: theme.colorScheme.secondary,
+        foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('NUEVO'),
       ),

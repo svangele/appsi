@@ -528,8 +528,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showUserForm(),
         backgroundColor: theme.colorScheme.secondary,
-        icon: const Icon(Icons.person_add),
-        label: const Text('NUEVO USUARIO'),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('NUEVO'),
       ),
       body: Column(
               children: [
