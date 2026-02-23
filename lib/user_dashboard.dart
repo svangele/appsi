@@ -463,7 +463,7 @@ class _UserDashboardState extends State<UserDashboard> {
             decoration: BoxDecoration(
               color: Colors.grey[50],
               borderRadius: BorderRadius.circular(12),
-              border: BorderSide(color: Colors.grey[100]!),
+              border: Border.all(color: Colors.grey[100]!),
             ),
             child: Column(
               children: [
