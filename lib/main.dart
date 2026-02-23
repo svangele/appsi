@@ -3,8 +3,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'main_navigation.dart';
 import 'login_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 void main() async {
+  usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
@@ -36,6 +39,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
+        textTheme: GoogleFonts.interTextTheme(ThemeData().textTheme),
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF344092),
           primary: const Color(0xFF344092),
