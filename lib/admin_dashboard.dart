@@ -26,7 +26,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     try {
       final data = await Supabase.instance.client
           .from('cssi_contributors')
-          .select('id, nombre, paterno, materno, numero_empleado')
+          .select('id, nombre, paterno, materno, numero_empleado, status_sys')
           .order('nombre');
       setState(() => _collaborators = List<Map<String, dynamic>>.from(data));
     } catch (e) {
@@ -39,7 +39,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     try {
       final data = await Supabase.instance.client
           .from('profiles')
-          .select()
+          .select('*, cssi_contributors(status_sys)')
           .order('created_at', ascending: false);
       setState(() => _users = List<Map<String, dynamic>>.from(data));
     } catch (e) {
@@ -133,8 +133,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final nameController = TextEditingController(text: user?['full_name']);
     final employeeNumberController = TextEditingController(text: user?['numero_empleado']);
     final emailController = TextEditingController(text: user?['email']);
-    final passwordController = TextEditingController();
+    String password = '';
     String role = user?['role'] ?? 'usuario';
+    String? statusSys = user?['cssi_contributors']?['status_sys'] ?? user?['status_sys'] ?? 'ACTIVO';
     String? selectedCssiId = user?['cssi_id'];
     bool isBlocked = user?['is_blocked'] ?? false;
     final permissions = Map<String, bool>.from(user?['permissions'] ?? {
@@ -189,8 +190,24 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                      TextField(
-                        controller: emailController,
+                    DropdownButtonFormField<String>(
+                      value: statusSys,
+                      decoration: InputDecoration(
+                        labelText: 'System Sys',
+                        prefixIcon: const Icon(Icons.settings_suggest_outlined),
+                        filled: true,
+                        fillColor: selectedCssiId != null ? Colors.blue[50] : const Color(0xFFF5F5F5),
+                        helperText: selectedCssiId != null ? 'Sincronizado con Colaborador' : 'Estado Local del Usuario',
+                        helperStyle: TextStyle(color: selectedCssiId != null ? Colors.blue[700] : null, fontWeight: selectedCssiId != null ? FontWeight.bold : null),
+                      ),
+                      isExpanded: true,
+                      // If linked to collaborator, it becomes read-only in this view (or at least distinctive)
+                      items: ['ACTIVO', 'BAJA', 'CAMBIO'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                      onChanged: selectedCssiId != null ? null : (val) => setDialogState(() => statusSys = val),
+                    ),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: emailController,
                         decoration: const InputDecoration(labelText: 'Correo Electrónico', prefixIcon: Icon(Icons.email)),
                         keyboardType: TextInputType.emailAddress,
                       ),
@@ -242,6 +259,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             final colab = _collaborators.firstWhere((c) => c['id'] == val);
                             nameController.text = '${colab['nombre']} ${colab['paterno']} ${colab['materno'] ?? ''}'.trim().toUpperCase();
                             employeeNumberController.text = colab['numero_empleado'] ?? '';
+                            statusSys = colab['status_sys'] ?? 'ACTIVO';
                           }
                         });
                       },
@@ -332,6 +350,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     'new_ek_pass': ekPass.text.trim(),
                                     'new_otro_user': otroUser.text.trim(),
                                     'new_otro_pass': otroPass.text.trim(),
+                                    'new_status_sys': statusSys,
                                   });
                                 } else {
                                   // 1. Create the user via RPC
@@ -358,6 +377,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       'ek_pass': ekPass.text.trim(),
                                       'otro_user': otroUser.text.trim(),
                                       'otro_pass': otroPass.text.trim(),
+                                      'status_sys': statusSys,
                                     }).eq('id', userId);
                                   }
                                 }
