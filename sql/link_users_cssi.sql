@@ -86,12 +86,11 @@ DECLARE
 BEGIN
   is_admin_user := (COALESCE(new.raw_user_meta_data->>'role', 'usuario') = 'admin');
 
-  INSERT INTO public.profiles (id, full_name, role, email, is_blocked, permissions)
+  INSERT INTO public.profiles (id, full_name, role, is_blocked, permissions)
   VALUES (
     new.id, 
     COALESCE(new.raw_user_meta_data->>'full_name', 'Nuevo Usuario'), 
     (COALESCE(new.raw_user_meta_data->>'role', 'usuario'))::user_role,
-    new.email,
     (new.banned_until IS NOT NULL AND new.banned_until > now()),
     -- Si es admin, le damos todos los permisos por defecto
     CASE 
@@ -102,7 +101,6 @@ BEGIN
   ON CONFLICT (id) DO UPDATE SET
     full_name = EXCLUDED.full_name,
     role = EXCLUDED.role,
-    email = EXCLUDED.email,
     is_blocked = EXCLUDED.is_blocked;
   RETURN new;
 END;
@@ -153,7 +151,6 @@ BEGIN
   SET
     full_name = new_full_name,
     role = new_role::user_role,
-    email = LOWER(new_email),
     cssi_id = new_cssi_id,
     numero_empleado = new_numero_empleado,
     is_blocked = is_blocked_param,

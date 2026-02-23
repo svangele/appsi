@@ -51,7 +51,6 @@ BEGIN
   SET
     full_name = new_full_name,
     role = new_role::user_role,
-    email = LOWER(new_email),
     cssi_id = new_cssi_id,
     numero_empleado = new_numero_empleado,
     is_blocked = is_blocked_param,
