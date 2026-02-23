@@ -23,6 +23,7 @@ ARG SB_TOKEN
 RUN flutter build web \
     --dart-define=SB_URL=${SB_URL} \
     --dart-define=SB_TOKEN=${SB_TOKEN} \
+    --web-renderer html \
     --release
 
 # Stage 2: Serve with Nginx
