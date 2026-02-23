@@ -197,13 +197,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         prefixIcon: const Icon(Icons.settings_suggest_outlined),
                         filled: true,
                         fillColor: selectedCssiId != null ? Colors.blue[50] : const Color(0xFFF5F5F5),
-                        helperText: selectedCssiId != null ? 'Sincronizado con Colaborador' : 'Estado Local del Usuario',
-                        helperStyle: TextStyle(color: selectedCssiId != null ? Colors.blue[700] : null, fontWeight: selectedCssiId != null ? FontWeight.bold : null),
+                        helperText: selectedCssiId != null ? 'Edita el estado del Colaborador vinculado' : 'Requiere vincular Colaborador para gestionar estado',
+                        helperStyle: TextStyle(color: selectedCssiId != null ? Colors.blue[700] : Colors.orange[800], fontWeight: FontWeight.bold),
                       ),
                       isExpanded: true,
-                      // If linked to collaborator, it becomes read-only in this view (or at least distinctive)
+                      // Now editable ONLY if selectedCssiId is NOT null
                       items: ['ACTIVO', 'BAJA', 'CAMBIO'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                      onChanged: selectedCssiId != null ? null : (val) => setDialogState(() => statusSys = val),
+                      onChanged: selectedCssiId == null ? null : (val) => setDialogState(() => statusSys = val),
                     ),
                     const SizedBox(height: 24),
                     TextField(
@@ -352,6 +352,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     'new_otro_pass': otroPass.text.trim(),
                                     'new_status_sys': statusSys,
                                   });
+
+                                  // Bidirectional Sync: Update CSSI if linked
+                                  if (selectedCssiId != null) {
+                                    await Supabase.instance.client
+                                        .from('cssi_contributors')
+                                        .update({'status_sys': statusSys})
+                                        .eq('id', selectedCssiId!);
+                                  }
                                 } else {
                                   // 1. Create the user via RPC
                                   final response = await Supabase.instance.client.rpc('create_user_admin', params: {
@@ -379,6 +387,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       'otro_pass': otroPass.text.trim(),
                                       'status_sys': statusSys,
                                     }).eq('id', userId);
+
+                                    // Bidirectional Sync for New User
+                                    if (selectedCssiId != null) {
+                                      await Supabase.instance.client
+                                          .from('cssi_contributors')
+                                          .update({'status_sys': statusSys})
+                                          .eq('id', selectedCssiId!);
+                                    }
                                   }
                                 }
                                 if (mounted) {
