@@ -133,7 +133,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final nameController = TextEditingController(text: user?['full_name']);
     final employeeNumberController = TextEditingController(text: user?['numero_empleado']);
     final emailController = TextEditingController(text: user?['email']);
-    String password = '';
+    final passwordController = TextEditingController();
     String role = user?['role'] ?? 'usuario';
     String? statusSys = user?['cssi_contributors']?['status_sys'] ?? user?['status_sys'] ?? 'ACTIVO';
     String? selectedCssiId = user?['cssi_id'];
