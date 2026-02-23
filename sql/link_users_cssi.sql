@@ -167,7 +167,6 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Sincronizar datos existentes y asignar permisos por defecto a admins
 UPDATE public.profiles p
 SET 
-  email = u.email, 
   is_blocked = (u.banned_until IS NOT NULL AND u.banned_until > now()),
   permissions = CASE 
     WHEN p.role = 'admin' THEN '{"show_users": true, "show_issi": true, "show_cssi": true, "show_logs": true}'::jsonb

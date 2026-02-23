@@ -177,6 +177,42 @@ class _UserDashboardState extends State<UserDashboard> {
                   ),
                 ),
                 const SizedBox(height: 24),
+                // Nueva Sección: Credenciales de Sistemas
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      side: BorderSide(color: Colors.grey[200]!),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.key_outlined, color: Colors.blueGrey, size: 28),
+                              SizedBox(width: 12),
+                              Text(
+                                'Credenciales de Sistemas',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          _buildSystemAccessRow('DRP', _profile?['drp_user'], _profile?['drp_pass'], 'drp'),
+                          _buildSystemAccessRow('GP', _profile?['gp_user'], _profile?['gp_pass'], 'gp'),
+                          _buildSystemAccessRow('BITRIX', _profile?['bitrix_user'], _profile?['bitrix_pass'], 'bitrix'),
+                          _buildSystemAccessRow('ENKONTROL', _profile?['ek_user'], _profile?['ek_pass'], 'ek'),
+                          _buildSystemAccessRow('OTRO', _profile?['otro_user'], _profile?['otro_pass'], 'otro'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
@@ -408,6 +444,67 @@ class _UserDashboardState extends State<UserDashboard> {
         const Spacer(),
         Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
       ],
+    );
+  }
+
+  Widget _buildSystemAccessRow(String label, String? user, String? pass, String key) {
+    final hasData = (user != null && user.isNotEmpty) || (pass != null && pass.isNotEmpty);
+    if (!hasData) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: BorderSide(color: Colors.grey[100]!),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.person_outline, size: 16, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    const Text('Usuario:', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                    const SizedBox(width: 8),
+                    Text(user ?? '---', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.lock_outline, size: 16, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    const Text('Contraseña:', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                    const SizedBox(width: 8),
+                    Text(
+                      (_obscureCredentials[key] ?? true) ? '••••••••' : (pass ?? '---'),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: Icon(
+                        (_obscureCredentials[key] ?? true) ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        size: 18,
+                        color: Colors.blueGrey,
+                      ),
+                      onPressed: () => setState(() => _obscureCredentials[key] = !(_obscureCredentials[key] ?? true)),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
