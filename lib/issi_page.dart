@@ -696,7 +696,7 @@ class _IssiPageState extends State<IssiPage> {
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: Text(
-                                          item['tipo'].toString().toUpperCase(),
+                                          item['usuario_nombre']?.toString().toUpperCase() ?? 'SIN USUARIO',
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,
@@ -723,16 +723,30 @@ class _IssiPageState extends State<IssiPage> {
                                     ],
                                   ),
                                 ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit_outlined, color: Colors.blueGrey),
-                                      onPressed: () => _showItemForm(item: item),
+                                trailing: PopupMenuButton<String>(
+                                  onSelected: (value) {
+                                    if (value == 'edit') {
+                                      _showItemForm(item: item);
+                                    } else if (value == 'delete') {
+                                      _deleteItem(item['id']);
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(
+                                      value: 'edit',
+                                      child: ListTile(
+                                        leading: Icon(Icons.edit_outlined),
+                                        title: Text('Editar'),
+                                        dense: true,
+                                      ),
                                     ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                                      onPressed: () => _deleteItem(item['id']),
+                                    const PopupMenuItem(
+                                      value: 'delete',
+                                      child: ListTile(
+                                        leading: Icon(Icons.delete_outline, color: Colors.red),
+                                        title: Text('Eliminar', style: TextStyle(color: Colors.red)),
+                                        dense: true,
+                                      ),
                                     ),
                                   ],
                                 ),
