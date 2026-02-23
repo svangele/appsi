@@ -178,6 +178,8 @@ class _CssiPageState extends State<CssiPage> {
     String? estadoCivil = item?['estado_civil'];
     String? escolaridad = item?['escolaridad'];
     String? credito = item?['credito'];
+    String? statusSys = item?['status_sys'] ?? 'ACTIVO';
+    String? statusRh = item?['status_rh'] ?? 'ACTIVO';
     XFile? pickedFile;
     String? currentFotoUrl = item?['foto_url'];
 
@@ -257,6 +259,28 @@ class _CssiPageState extends State<CssiPage> {
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
                             LengthLimitingTextInputFormatter(4),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: statusSys,
+                                decoration: const InputDecoration(labelText: 'Status Sys'),
+                                items: ['ACTIVO', 'BAJA', 'CAMBIO'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                                onChanged: (v) => setDialogState(() => statusSys = v),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: statusRh,
+                                decoration: const InputDecoration(labelText: 'Status RH'),
+                                items: ['ACTIVO', 'BAJA', 'CAMBIO', 'REINGRESO'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                                onChanged: (v) => setDialogState(() => statusRh = v),
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -500,6 +524,8 @@ class _CssiPageState extends State<CssiPage> {
                               'referencia_telefono': toUpper(refTelCtrl.text),
                               'referencia_relacion': toUpper(refRelacionCtrl.text),
                               'numero_empleado': numeroEmpleadoCtrl.text.trim(),
+                              'status_sys': statusSys,
+                              'status_rh': statusRh,
                               'foto_url': currentFotoUrl,
                               'usuario_id': Supabase.instance.client.auth.currentUser?.id,
                               'usuario_nombre': 'ADMIN',
