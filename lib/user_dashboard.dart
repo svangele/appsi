@@ -10,6 +10,7 @@ class UserDashboard extends StatefulWidget {
 
 class _UserDashboardState extends State<UserDashboard> {
   Map<String, dynamic>? _profile;
+  List<Map<String, dynamic>>? _assignedEquipment;
   bool _isLoading = true;
   final Map<String, bool> _obscureCredentials = {
     'drp': true, 'gp': true, 'bitrix': true, 'ek': true, 'otro': true,
@@ -34,6 +35,18 @@ class _UserDashboardState extends State<UserDashboard> {
         if (mounted) {
           setState(() {
             _profile = data;
+          });
+        }
+
+        // Fetch assigned equipment
+        final equipmentData = await Supabase.instance.client
+            .from('issi_inventory')
+            .select()
+            .eq('usuario_id', user.id);
+        
+        if (mounted) {
+          setState(() {
+            _assignedEquipment = List<Map<String, dynamic>>.from(equipmentData);
             _isLoading = false;
           });
         }
@@ -171,6 +184,49 @@ class _UserDashboardState extends State<UserDashboard> {
                               ),
                             ),
                           ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Nueva Sección: Equipo Asignado
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      side: BorderSide(color: Colors.grey[200]!),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.inventory_2_outlined, color: Colors.blueGrey, size: 28),
+                              SizedBox(width: 12),
+                              Text(
+                                'Equipo Asignado',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          if (_assignedEquipment == null || _assignedEquipment!.isEmpty)
+                            const Center(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: 20),
+                                child: Text(
+                                  'Sin equipo asignado registrado',
+                                  style: TextStyle(color: Colors.blueGrey, fontStyle: FontStyle.italic),
+                                ),
+                              ),
+                            )
+                          else
+                            ..._assignedEquipment!.map((item) => _buildEquipmentItem(item, theme)),
                         ],
                       ),
                     ),
@@ -506,5 +562,103 @@ class _UserDashboardState extends State<UserDashboard> {
         ],
       ),
     );
+  }
+
+  Widget _buildEquipmentItem(Map<String, dynamic> item, ThemeData theme) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[100]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                _getIconForType(item['tipo']),
+                size: 20,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                item['tipo']?.toString().toUpperCase() ?? 'EQUIPO',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: _getColorForCondition(item['condicion']).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  item['condicion']?.toString().toUpperCase() ?? 'USADO',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: _getColorForCondition(item['condicion']),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '${item['marca'] ?? ''} ${item['modelo'] ?? ''}',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+          if (item['n_s'] != null && item['n_s'].toString().isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              'S/N: ${item['n_s']}',
+              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            ),
+          ],
+          if (item['ubicacion'] != null && item['ubicacion'].toString().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(
+                  item['ubicacion'],
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  IconData _getIconForType(String? tipo) {
+    switch (tipo?.toLowerCase()) {
+      case 'laptop': return Icons.laptop;
+      case 'pc': return Icons.computer;
+      case 'impresora': return Icons.print;
+      case 'celular': return Icons.smartphone;
+      case 'telefono': return Icons.phone;
+      case 'monitor': return Icons.monitor;
+      default: return Icons.devices;
+    }
+  }
+
+  Color _getColorForCondition(String? condicion) {
+    switch (condicion?.toLowerCase()) {
+      case 'nuevo': return Colors.green;
+      case 'usado': return Colors.orange;
+      case 'dañado': return Colors.red;
+      case 'sin reparacion': return Colors.black;
+      default: return Colors.blueGrey;
+    }
   }
 }
