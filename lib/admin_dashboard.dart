@@ -144,6 +144,22 @@ class _AdminDashboardState extends State<AdminDashboard> {
       'show_logs': false,
     });
 
+    // Credential Controllers
+    final drpUser = TextEditingController(text: user?['drp_user']);
+    final drpPass = TextEditingController(text: user?['drp_pass']);
+    final gpUser = TextEditingController(text: user?['gp_user']);
+    final gpPass = TextEditingController(text: user?['gp_pass']);
+    final bitrixUser = TextEditingController(text: user?['bitrix_user']);
+    final bitrixPass = TextEditingController(text: user?['bitrix_pass']);
+    final ekUser = TextEditingController(text: user?['ek_user']);
+    final ekPass = TextEditingController(text: user?['ek_pass']);
+    final otroUser = TextEditingController(text: user?['otro_user']);
+    final otroPass = TextEditingController(text: user?['otro_pass']);
+
+    final Map<String, bool> obscureStatus = {
+      'drp': true, 'gp': true, 'bitrix': true, 'ek': true, 'otro': true,
+    };
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -259,6 +275,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     _buildPermissionSwitch('Colaboradores CSSI', 'show_cssi', Icons.badge, permissions, setDialogState),
                     _buildPermissionSwitch('Logs del Sistema', 'show_logs', Icons.assignment, permissions, setDialogState),
                     const SizedBox(height: 24),
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    Text('CREDENCIALES DE SISTEMAS', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                    const SizedBox(height: 16),
+                    _buildCredentialRow('DRP', drpUser, drpPass, 'drp', obscureStatus, setDialogState),
+                    _buildCredentialRow('GP', gpUser, gpPass, 'gp', obscureStatus, setDialogState),
+                    _buildCredentialRow('BITRIX', bitrixUser, bitrixPass, 'bitrix', obscureStatus, setDialogState),
+                    _buildCredentialRow('ENKONTROL', ekUser, ekPass, 'ek', obscureStatus, setDialogState),
+                    _buildCredentialRow('OTRO', otroUser, otroPass, 'otro', obscureStatus, setDialogState),
+                    const SizedBox(height: 24),
                     Row(
                       children: [
                         Expanded(
@@ -296,6 +322,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     'new_numero_empleado': employeeNumberController.text.trim(),
                                     'is_blocked_param': isBlocked,
                                     'new_permissions': permissions,
+                                    'new_drp_user': drpUser.text.trim(),
+                                    'new_drp_pass': drpPass.text.trim(),
+                                    'new_gp_user': gpUser.text.trim(),
+                                    'new_gp_pass': gpPass.text.trim(),
+                                    'new_bitrix_user': bitrixUser.text.trim(),
+                                    'new_bitrix_pass': bitrixPass.text.trim(),
+                                    'new_ek_user': ekUser.text.trim(),
+                                    'new_ek_pass': ekPass.text.trim(),
+                                    'new_otro_user': otroUser.text.trim(),
+                                    'new_otro_pass': otroPass.text.trim(),
                                   });
                                 } else {
                                   // 1. Create the user via RPC
@@ -306,16 +342,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     'user_role': role,
                                   });
 
-                                  // 2. If we have a CSSI link, we need to update the newly created profile
-                                  // The RPC should return the user ID. If not, we'll have to find it.
-                                  if (selectedCssiId != null) {
-                                    final userId = response as String?;
-                                    if (userId != null) {
-                                      await Supabase.instance.client.from('profiles').update({
-                                        'cssi_id': selectedCssiId,
-                                        'numero_empleado': employeeNumberController.text.trim(),
-                                      }).eq('id', userId);
-                                    }
+                                  final userId = response as String?;
+                                  if (userId != null) {
+                                    // Update profile with extra data (collaborator + credentials)
+                                    await Supabase.instance.client.from('profiles').update({
+                                      'cssi_id': selectedCssiId,
+                                      'numero_empleado': employeeNumberController.text.trim(),
+                                      'drp_user': drpUser.text.trim(),
+                                      'drp_pass': drpPass.text.trim(),
+                                      'gp_user': gpUser.text.trim(),
+                                      'gp_pass': gpPass.text.trim(),
+                                      'bitrix_user': bitrixUser.text.trim(),
+                                      'bitrix_pass': bitrixPass.text.trim(),
+                                      'ek_user': ekUser.text.trim(),
+                                      'ek_pass': ekPass.text.trim(),
+                                      'otro_user': otroUser.text.trim(),
+                                      'otro_pass': otroPass.text.trim(),
+                                    }).eq('id', userId);
                                   }
                                 }
                                 if (mounted) {
@@ -359,6 +402,54 @@ class _AdminDashboardState extends State<AdminDashboard> {
       onChanged: (val) => setDialogState(() => permissions[key] = val ?? false),
       dense: true,
       contentPadding: EdgeInsets.zero,
+    );
+  }
+
+  Widget _buildCredentialRow(String label, TextEditingController uCtrl, TextEditingController pCtrl, String key, Map<String, bool> obscureMap, StateSetter setDialogState) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: uCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Usuario',
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                ),
+                style: const TextStyle(fontSize: 14),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: pCtrl,
+                obscureText: obscureMap[key] ?? true,
+                decoration: InputDecoration(
+                  labelText: 'Contraseña',
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      (obscureMap[key] ?? true) ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      size: 18,
+                    ),
+                    onPressed: () => setDialogState(() => obscureMap[key] = !(obscureMap[key] ?? true)),
+                  ),
+                ),
+                style: const TextStyle(fontSize: 14),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+      ],
     );
   }
 

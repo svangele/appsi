@@ -11,6 +11,9 @@ class UserDashboard extends StatefulWidget {
 class _UserDashboardState extends State<UserDashboard> {
   Map<String, dynamic>? _profile;
   bool _isLoading = true;
+  final Map<String, bool> _obscureCredentials = {
+    'drp': true, 'gp': true, 'bitrix': true, 'ek': true, 'otro': true,
+  };
 
   @override
   void initState() {
@@ -148,7 +151,7 @@ class _UserDashboardState extends State<UserDashboard> {
                             const SizedBox(height: 12),
                             _buildInfoRow(Icons.manage_accounts_outlined, 'Gerente regional', _profile?['cssi_contributors']?['gerente_regional'] ?? '---'),
                             const SizedBox(height: 12),
-                            _buildInfoRow(Icons.supervisor_account_outlined, 'Jefe inmediato', _profile?['cssi_contributors']?['jefe_inmediato'] ?? '---'),
+                            _buildInfoRow(Icons.person_pin_outlined, 'Jefe inmediato', _profile?['cssi_contributors']?['jefe_inmediato'] ?? '---'),
                             const SizedBox(height: 12),
                             _buildInfoRow(Icons.groups_outlined, 'Líder', _profile?['cssi_contributors']?['lider'] ?? '---'),
                             const SizedBox(height: 12),
