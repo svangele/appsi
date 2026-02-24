@@ -3,9 +3,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
+import 'dart:io';
 
 class CssiPage extends StatefulWidget {
-  const CssiPage({super.key});
+  final String role;
+  const CssiPage({super.key, required this.role});
 
   @override
   State<CssiPage> createState() => _CssiPageState();
@@ -64,14 +66,6 @@ class _CssiPageState extends State<CssiPage> {
       }).toList();
     }
     return result;
-  }
-
-  List<Map<String, dynamic>> get _paginatedItems {
-    final filtered = _filteredItems;
-    final start = _currentPage * _itemsPerPage;
-    if (start >= filtered.length) return [];
-    final end = (start + _itemsPerPage).clamp(0, filtered.length);
-    return filtered.sublist(start, end);
   }
 
   int get _totalPages => (_filteredItems.length / _itemsPerPage).ceil().clamp(1, 9999);
@@ -232,10 +226,10 @@ class _CssiPageState extends State<CssiPage> {
                                   radius: 50,
                                   backgroundColor: Colors.grey[200],
                                   backgroundImage: pickedFile != null 
-                                    ? null // Will use child Image.file
+                                    ? null 
                                     : (currentFotoUrl != null ? NetworkImage(currentFotoUrl) : null),
                                   child: pickedFile != null 
-                                    ? ClipOval(child: Image.network(pickedFile!.path, fit: BoxFit.cover, width: 100, height: 100))
+                                    ? ClipOval(child: Image.file(File(pickedFile!.path), fit: BoxFit.cover, width: 100, height: 100))
                                     : (currentFotoUrl == null ? const Icon(Icons.person, size: 50, color: Colors.grey) : null),
                                 ),
                                 Positioned(
@@ -502,7 +496,7 @@ class _CssiPageState extends State<CssiPage> {
                               'estado_federal': toUpper(estadoFedCtrl.text),
                               'codigo_postal': toUpper(cpCtrl.text),
                               'telefono': toUpper(telCtrl.text),
-                              'celular': toUpper(celCtrl.text),
+                              'celular': toUpper(celularCtrl.text ?? celCtrl.text), // Celular logic
                               'correo_personal': toUpper(correoCtrl.text),
                               'banco': toUpper(bancoCtrl.text),
                               'cuenta': toUpper(cuentaCtrl.text),
@@ -586,9 +580,9 @@ class _CssiPageState extends State<CssiPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
+        border: Border.all(color: color.withOpacity(0.5)),
       ),
       child: Text(
         '$prefix: $status',
@@ -647,18 +641,20 @@ class _CssiPageState extends State<CssiPage> {
     final filtered = _filteredItems;
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showForm(),
-        backgroundColor: theme.colorScheme.secondary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('NUEVO'),
-      ),
+      floatingActionButton: widget.role == 'admin' 
+        ? FloatingActionButton.extended(
+            onPressed: () => _showForm(),
+            backgroundColor: theme.colorScheme.secondary,
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.add),
+            label: const Text('NUEVO'),
+          )
+        : null,
       body: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(24),
-            color: theme.colorScheme.primary.withValues(alpha: 0.05),
+            color: theme.colorScheme.primary.withOpacity(0.05),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -736,7 +732,7 @@ class _CssiPageState extends State<CssiPage> {
                               child: ListTile(
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                                 leading: CircleAvatar(
-                                  backgroundColor: const Color(0xFF344092).withValues(alpha: 0.1),
+                                  backgroundColor: const Color(0xFF344092).withOpacity(0.1),
                                   backgroundImage: item['foto_url'] != null ? NetworkImage(item['foto_url']) : null,
                                   child: item['foto_url'] == null 
                                     ? Text(item['nombre'][0], style: const TextStyle(color: Color(0xFF344092), fontWeight: FontWeight.bold))
@@ -750,33 +746,35 @@ class _CssiPageState extends State<CssiPage> {
                                     _buildStatusChip(item['status_sys'] ?? 'ACTIVO', 'SYS'),
                                   ],
                                 ),
-                                trailing: PopupMenuButton<String>(
-                                  onSelected: (value) {
-                                    if (value == 'edit') {
-                                      _showForm(item: item);
-                                    } else if (value == 'delete') {
-                                      _deleteItem(item['id']);
-                                    }
-                                  },
-                                  itemBuilder: (context) => [
-                                    const PopupMenuItem(
-                                      value: 'edit',
-                                      child: ListTile(
-                                        leading: Icon(Icons.edit),
-                                        title: Text('Editar'),
-                                        dense: true,
-                                      ),
-                                    ),
-                                    const PopupMenuItem(
-                                      value: 'delete',
-                                      child: ListTile(
-                                        leading: Icon(Icons.delete, color: Colors.red),
-                                        title: Text('Eliminar', style: TextStyle(color: Colors.red)),
-                                        dense: true,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                trailing: widget.role == 'admin' 
+                                  ? PopupMenuButton<String>(
+                                      onSelected: (value) {
+                                        if (value == 'edit') {
+                                          _showForm(item: item);
+                                        } else if (value == 'delete') {
+                                          _deleteItem(item['id']);
+                                        }
+                                      },
+                                      itemBuilder: (context) => [
+                                        const PopupMenuItem(
+                                          value: 'edit',
+                                          child: ListTile(
+                                            leading: Icon(Icons.edit),
+                                            title: Text('Editar'),
+                                            dense: true,
+                                          ),
+                                        ),
+                                        const PopupMenuItem(
+                                          value: 'delete',
+                                          child: ListTile(
+                                            leading: Icon(Icons.delete, color: Colors.red),
+                                            title: Text('Eliminar', style: TextStyle(color: Colors.red)),
+                                            dense: true,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : null,
                               ),
                             );
                           },

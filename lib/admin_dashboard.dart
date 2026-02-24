@@ -142,6 +142,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       'show_users': false,
       'show_issi': false,
       'show_cssi': false,
+      'show_incidencias': false,
       'show_logs': false,
     });
 
@@ -291,6 +292,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     _buildPermissionSwitch('Gestión de Usuarios', 'show_users', Icons.group, permissions, setDialogState),
                     _buildPermissionSwitch('Inventario ISSI', 'show_issi', Icons.inventory_2, permissions, setDialogState),
                     _buildPermissionSwitch('Colaboradores CSSI', 'show_cssi', Icons.badge, permissions, setDialogState),
+                    _buildPermissionSwitch('Peticiones de Incidencias', 'show_incidencias', Icons.description, permissions, setDialogState),
                     _buildPermissionSwitch('Logs del Sistema', 'show_logs', Icons.assignment, permissions, setDialogState),
                     const SizedBox(height: 24),
                     const Divider(),
@@ -689,6 +691,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                         _buildMiniIcon(Icons.group, user['permissions']['show_users'] == true),
                                         _buildMiniIcon(Icons.inventory_2, user['permissions']['show_issi'] == true),
                                         _buildMiniIcon(Icons.badge, user['permissions']['show_cssi'] == true),
+                                        _buildMiniIcon(Icons.description, user['permissions']['show_incidencias'] == true),
                                         _buildMiniIcon(Icons.assignment, user['permissions']['show_logs'] == true),
                                       ],
                                     ],

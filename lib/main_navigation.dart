@@ -31,13 +31,15 @@ class _MainNavigationState extends State<MainNavigation> {
       'widget': const UserDashboard(),
     });
 
-    // Incidencias siempre disponible
-    pages.add({
-      'title': 'Incidencias',
-      'icon': Icons.description_outlined,
-      'activeIcon': Icons.description,
-      'widget': const IncidenciasPage(),
-    });
+    // Incidencias disponible según permisos
+    if (widget.permissions['show_incidencias'] == true) {
+      pages.add({
+        'title': 'Incidencias',
+        'icon': Icons.description_outlined,
+        'activeIcon': Icons.description,
+        'widget': const IncidenciasPage(),
+      });
+    }
 
     if (widget.permissions['show_users'] == true) {
       pages.add({
@@ -62,7 +64,7 @@ class _MainNavigationState extends State<MainNavigation> {
         'title': 'CSSI',
         'icon': Icons.badge_outlined,
         'activeIcon': Icons.badge,
-        'widget': const CssiPage(),
+        'widget': CssiPage(role: widget.role),
       });
     }
 
