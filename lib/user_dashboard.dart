@@ -69,6 +69,7 @@ class _UserDashboardState extends State<UserDashboard> {
             child: Column(
               children: [
                 Stack(
+                  clipBehavior: Clip.none,
                   alignment: Alignment.center,
                   children: [
                     Container(
