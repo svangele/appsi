@@ -236,51 +236,125 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: _incidencias.length,
-            itemBuilder: (context, index) {
-              final inc = _incidencias[index];
-              return Card(
-                child: ListTile(
-                  leading: _getStatusIcon(inc['status']),
-                  title: Text(inc['periodo']),
-                  subtitle: Text('Días: ${inc['dias']} | Inicio: ${_formatDate(inc['fecha_inicio'])}'),
-                  trailing: _userRole == 'admin' 
-                    ? PopupMenuButton<String>(
-                        onSelected: (val) async {
-                          await Supabase.instance.client.from('incidencias').update({'status': val}).eq('id', inc['id']);
-                          _fetchIncidencias();
-                        },
-                        itemBuilder: (ctx) => [
-                          const PopupMenuItem(value: 'APROBADA', child: Text('Aprobar')),
-                          const PopupMenuItem(value: 'CANCELADA', child: Text('Cancelar')),
-                          const PopupMenuItem(value: 'PENDIENTE', child: Text('Pendiente')),
-                        ],
-                      )
-                    : (inc['status'] == 'PENDIENTE' 
-                        ? IconButton(icon: const Icon(Icons.edit), onPressed: () => _showIncidenciaForm(incidencia: inc))
-                        : null),
-                ),
-              );
-            },
-          ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showIncidenciaForm(),
-        label: const Text('Nueva Petición'),
+        backgroundColor: theme.colorScheme.secondary,
+        foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
+        label: const Text('NUEVA PETICIÓN'),
+      ),
+      body: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            color: theme.colorScheme.primary.withValues(alpha: 0.05),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Incidencias y Peticiones',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Total: ${_incidencias.length} registros',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: _isLoading 
+              ? const Center(child: CircularProgressIndicator())
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _incidencias.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final inc = _incidencias[index];
+                    return Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(color: Colors.grey[200]!),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        leading: CircleAvatar(
+                          backgroundColor: _getStatusColor(inc['status']).withValues(alpha: 0.1),
+                          child: Icon(_getStatusIconData(inc['status']), color: _getStatusColor(inc['status'])),
+                        ),
+                        title: Text(
+                          inc['nombre_usuario'] ?? 'Usuario',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text('Días: ${inc['dias']} | Creado: ${_formatDate(inc['created_at'])}'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor(inc['status']).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                inc['status'],
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: _getStatusColor(inc['status']),
+                                ),
+                              ),
+                            ),
+                            if (_userRole == 'admin') 
+                              PopupMenuButton<String>(
+                                onSelected: (val) async {
+                                  await Supabase.instance.client.from('incidencias').update({'status': val}).eq('id', inc['id']);
+                                  _fetchIncidencias();
+                                },
+                                itemBuilder: (ctx) => [
+                                  const PopupMenuItem(value: 'APROBADA', child: Text('Aprobar')),
+                                  const PopupMenuItem(value: 'CANCELADA', child: Text('Cancelar')),
+                                  const PopupMenuItem(value: 'PENDIENTE', child: Text('Pendiente')),
+                                ],
+                              )
+                            else if (inc['status'] == 'PENDIENTE')
+                              IconButton(icon: const Icon(Icons.edit_outlined, size: 20), onPressed: () => _showIncidenciaForm(incidencia: inc)),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _getStatusIcon(String status) {
+  IconData _getStatusIconData(String status) {
     switch (status) {
-      case 'APROBADA': return const Icon(Icons.check_circle, color: Colors.green);
-      case 'CANCELADA': return const Icon(Icons.cancel, color: Colors.red);
-      default: return const Icon(Icons.pending, color: Colors.orange);
+      case 'APROBADA': return Icons.check_circle_outline;
+      case 'CANCELADA': return Icons.cancel_outlined;
+      default: return Icons.pending_outlined;
     }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'APROBADA': return Colors.green;
+      case 'CANCELADA': return Colors.red;
+      default: return Colors.orange;
+    }
+  }
+
+  Widget _getStatusIcon(String status) {
+    return Icon(_getStatusIconData(status), color: _getStatusColor(status));
   }
 
   String _formatDate(String iso) {
