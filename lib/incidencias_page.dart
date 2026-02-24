@@ -121,7 +121,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                 ),
                 const SizedBox(height: 16),
                 _buildFieldLabel('Nombre (Automático)'),
-                Text(_userFullName ?? '...', style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(isEditing ? (incidencia['nombre_usuario'] ?? '...') : (_userFullName ?? '...'), style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 _buildFieldLabel('Periodo'),
                 DropdownButtonFormField<String>(

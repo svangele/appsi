@@ -94,8 +94,7 @@ class _MainNavigationState extends State<MainNavigation> {
       appBar: AppBar(
         title: Text(pages[_selectedIndex]['title']),
         actions: [
-          if (widget.role == 'admin')
-            const NotificationBell(),
+          const NotificationBell(),
         ],
       ),
       body: pages[_selectedIndex]['widget'],
