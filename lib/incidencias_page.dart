@@ -241,7 +241,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
         backgroundColor: theme.colorScheme.secondary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: const Text('NUEVA PETICIÓN'),
+        label: const Text('NUEVO'),
       ),
       body: Column(
         children: [
@@ -284,10 +284,6 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                       ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        leading: CircleAvatar(
-                          backgroundColor: _getStatusColor(inc['status']).withValues(alpha: 0.1),
-                          child: Icon(_getStatusIconData(inc['status']), color: _getStatusColor(inc['status'])),
-                        ),
                         title: Text(
                           inc['nombre_usuario'] ?? 'Usuario',
                           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -314,10 +310,16 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                             if (_userRole == 'admin') 
                               PopupMenuButton<String>(
                                 onSelected: (val) async {
-                                  await Supabase.instance.client.from('incidencias').update({'status': val}).eq('id', inc['id']);
-                                  _fetchIncidencias();
+                                  if (val == 'EDIT') {
+                                    _showIncidenciaForm(incidencia: inc);
+                                  } else {
+                                    await Supabase.instance.client.from('incidencias').update({'status': val}).eq('id', inc['id']);
+                                    _fetchIncidencias();
+                                  }
                                 },
                                 itemBuilder: (ctx) => [
+                                  const PopupMenuItem(value: 'EDIT', child: ListTile(leading: Icon(Icons.edit_outlined), title: Text('Editar'), dense: true)),
+                                  const PopupMenuDivider(),
                                   const PopupMenuItem(value: 'APROBADA', child: Text('Aprobar')),
                                   const PopupMenuItem(value: 'CANCELADA', child: Text('Cancelar')),
                                   const PopupMenuItem(value: 'PENDIENTE', child: Text('Pendiente')),
