@@ -4,6 +4,7 @@ ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS user_id UUID REFERENCE
 -- Actualizar política de lectura (SELECT)
 DROP POLICY IF EXISTS "Admins can view all notifications" ON public.notifications;
 DROP POLICY IF EXISTS "Users can view their own notifications" ON public.notifications;
+DROP POLICY IF EXISTS "Users and Admins can view notifications" ON public.notifications;
 
 CREATE POLICY "Users and Admins can view notifications" 
 ON public.notifications FOR SELECT 
@@ -20,6 +21,7 @@ USING (
 -- Actualizar política de actualización (UPDATE)
 DROP POLICY IF EXISTS "Admins can update notifications" ON public.notifications;
 DROP POLICY IF EXISTS "Users can update their own notifications" ON public.notifications;
+DROP POLICY IF EXISTS "Users and Admins can update notifications" ON public.notifications;
 
 CREATE POLICY "Users and Admins can update notifications" 
 ON public.notifications FOR UPDATE 
@@ -32,3 +34,10 @@ USING (
         AND profiles.role = 'admin'
     ))
 );
+
+-- Habilitar inserción (INSERT) para usuarios autenticados
+DROP POLICY IF EXISTS "Users can insert notifications" ON public.notifications;
+CREATE POLICY "Users can insert notifications" 
+ON public.notifications FOR INSERT 
+TO authenticated 
+WITH CHECK (true);
