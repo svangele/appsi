@@ -762,7 +762,7 @@ class _CssiPageState extends State<CssiPage> {
                                     const PopupMenuItem(
                                       value: 'edit',
                                       child: ListTile(
-                                        leading: Icon(Icons.edit_outlined),
+                                        leading: Icon(Icons.edit),
                                         title: Text('Editar'),
                                         dense: true,
                                       ),
@@ -770,7 +770,7 @@ class _CssiPageState extends State<CssiPage> {
                                     const PopupMenuItem(
                                       value: 'delete',
                                       child: ListTile(
-                                        leading: Icon(Icons.delete_outline, color: Colors.red),
+                                        leading: Icon(Icons.delete, color: Colors.red),
                                         title: Text('Eliminar', style: TextStyle(color: Colors.red)),
                                         dense: true,
                                       ),

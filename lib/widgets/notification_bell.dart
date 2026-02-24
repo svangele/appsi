@@ -16,7 +16,7 @@ class NotificationBell extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             IconButton(
-              icon: const Icon(Icons.notifications_outlined),
+              icon: const Icon(Icons.notifications),
               onPressed: () {
                 showModalBottomSheet(
                   context: context,
