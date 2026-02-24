@@ -5,6 +5,7 @@ import 'admin_dashboard.dart';
 import 'system_logs_page.dart';
 import 'issi_page.dart';
 import 'cssi_page.dart';
+import 'incidencias_page.dart';
 import 'widgets/notification_bell.dart';
 
 class MainNavigation extends StatefulWidget {
@@ -28,6 +29,14 @@ class _MainNavigationState extends State<MainNavigation> {
       'icon': Icons.person_outline,
       'activeIcon': Icons.person,
       'widget': const UserDashboard(),
+    });
+
+    // Incidencias siempre disponible
+    pages.add({
+      'title': 'Incidencias',
+      'icon': Icons.description_outlined,
+      'activeIcon': Icons.description,
+      'widget': const IncidenciasPage(),
     });
 
     if (widget.permissions['show_users'] == true) {
