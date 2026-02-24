@@ -496,7 +496,7 @@ class _CssiPageState extends State<CssiPage> {
                               'estado_federal': toUpper(estadoFedCtrl.text),
                               'codigo_postal': toUpper(cpCtrl.text),
                               'telefono': toUpper(telCtrl.text),
-                              'celular': toUpper(celularCtrl.text ?? celCtrl.text), // Celular logic
+                              'celular': toUpper(celCtrl.text), // Celular logic
                               'correo_personal': toUpper(correoCtrl.text),
                               'banco': toUpper(bancoCtrl.text),
                               'cuenta': toUpper(cuentaCtrl.text),
