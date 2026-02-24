@@ -285,7 +285,18 @@ class _UserDashboardState extends State<UserDashboard> {
                       ),
                       const SizedBox(height: 16),
                       OutlinedButton.icon(
-                        onPressed: () => Supabase.instance.client.auth.signOut(),
+                        onPressed: () async {
+                          try {
+                            final user = Supabase.instance.client.auth.currentUser;
+                            await Supabase.instance.client.rpc('log_event', params: {
+                              'action_type_param': 'CIERRE DE SESIÓN',
+                              'target_info_param': 'Usuario: ${user?.email ?? '---'}',
+                            });
+                          } catch (e) {
+                            debugPrint('Error logging logout: $e');
+                          }
+                          await Supabase.instance.client.auth.signOut();
+                        },
                         icon: const Icon(Icons.logout_rounded),
                         label: const Text('CERRAR SESIÓN'),
                         style: OutlinedButton.styleFrom(

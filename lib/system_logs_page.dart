@@ -198,6 +198,10 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
         return const Icon(Icons.person_remove_alt_1, color: Colors.redAccent);
       case 'REGISTRO':
         return Icon(Icons.app_registration, color: theme.colorScheme.primary);
+      case 'INICIO DE SESIÓN':
+        return const Icon(Icons.login_rounded, color: Colors.green);
+      case 'CIERRE DE SESIÓN':
+        return const Icon(Icons.logout_rounded, color: Colors.orange);
       default:
         return const Icon(Icons.history, color: Colors.blueGrey);
     }

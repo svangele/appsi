@@ -28,6 +28,12 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+
+      // Registrar inicio de sesión en los logs
+      await Supabase.instance.client.rpc('log_event', params: {
+        'action_type_param': 'INICIO DE SESIÓN',
+        'target_info_param': 'Usuario: ${_emailController.text.trim()}',
+      });
     } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
