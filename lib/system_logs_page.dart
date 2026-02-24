@@ -13,12 +13,50 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
   bool _isLoading = true;
   DateTime? _startDate;
   DateTime? _endDate;
-
+  Map<DateTime, int> _dailyLogins = {};
 
   @override
   void initState() {
     super.initState();
     _fetchLogs();
+    _fetchChartData();
+  }
+
+  Future<void> _fetchChartData() async {
+    try {
+      final now = DateTime.now();
+      final oneWeekAgo = DateTime(now.year, now.month, now.day - 6);
+      
+      final data = await Supabase.instance.client
+          .from('system_logs')
+          .select('created_at')
+          .eq('action_type', 'INICIO DE SESIÓN')
+          .gte('created_at', oneWeekAgo.toIso8601String())
+          .order('created_at', ascending: true);
+
+      final Map<DateTime, int> counts = {};
+      // Initialize days
+      for (int i = 0; i < 7; i++) {
+        final date = DateTime(oneWeekAgo.year, oneWeekAgo.month, oneWeekAgo.day + i);
+        counts[date] = 0;
+      }
+
+      for (final row in data) {
+        final date = DateTime.parse(row['created_at']).toLocal();
+        final dayDate = DateTime(date.year, date.month, date.day);
+        if (counts.containsKey(dayDate)) {
+          counts[dayDate] = (counts[dayDate] ?? 0) + 1;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _dailyLogins = counts;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching chart data: $e');
+    }
   }
 
   Future<void> _fetchLogs() async {
@@ -61,22 +99,41 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(24),
-          color: theme.colorScheme.primary.withOpacity(0.05),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.05),
+            border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Logs del Sistema',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Logs del Sistema',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Actividad real capturada desde la base de datos',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      ),
+                    ],
+                  ),
+                  _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.show_chart, color: Colors.blueAccent),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Actividad real capturada desde la base de datos',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
+              const SizedBox(height: 24),
+              // Gráfica de Inicios de Sesión
+              _buildChartSection(theme),
+              const SizedBox(height: 24),
+              const Divider(),
               const SizedBox(height: 16),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -188,6 +245,115 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
         ),
       ],
     );
+  }
+
+  Widget _buildChartSection(ThemeData theme) {
+    if (_dailyLogins.isEmpty) return const SizedBox.shrink();
+
+    final maxLogins = _dailyLogins.values.isEmpty ? 0 : _dailyLogins.values.reduce((a, b) => a > b ? a : b);
+    final totalLogins = _dailyLogins.values.fold(0, (sum, val) => sum + val);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.assessment_outlined, size: 18, color: Colors.grey),
+            const SizedBox(width: 8),
+            Text(
+              'Inicios de Sesión (Última Semana)',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Total: $totalLogins',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          height: 120,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: _dailyLogins.entries.map((entry) {
+              final dayName = _getDayName(entry.key);
+              final count = entry.value;
+              final heightFactor = maxLogins == 0 ? 0.0 : count / maxLogins;
+              
+              return Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      count.toString(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: count > 0 ? theme.colorScheme.primary : Colors.grey[300],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeOutCubic,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      height: 80 * heightFactor + 4, // Min height of 4
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: count > 0 
+                            ? [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.7)]
+                            : [Colors.grey[200]!, Colors.grey[100]!],
+                        ),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                        boxShadow: count > 0 ? [
+                          BoxShadow(
+                            color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          )
+                        ] : null,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      dayName,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[600],
+                        fontWeight: entry.key.day == DateTime.now().day ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getDayName(DateTime date) {
+    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    return days[date.weekday % 7];
   }
 
   Icon _getIconForAction(String action, ThemeData theme) {
