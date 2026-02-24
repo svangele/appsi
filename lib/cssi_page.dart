@@ -162,6 +162,11 @@ class _CssiPageState extends State<CssiPage> {
     final reclutadorCtrl = TextEditingController(text: item?['reclutador']);
     final fuenteCtrl = TextEditingController(text: item?['fuente_reclutamiento']);
     final fuenteEspecCtrl = TextEditingController(text: item?['fuente_reclutamiento_espec']);
+    
+    final fechaIngresoCtrl = TextEditingController(text: item?['fecha_ingreso']);
+    final fechaReingresoCtrl = TextEditingController(text: item?['fecha_reingreso']);
+    final fechaCambioCtrl = TextEditingController(text: item?['fecha_cambio']);
+    
     final obsCtrl = TextEditingController(text: item?['observaciones']);
     
     final refNombreCtrl = TextEditingController(text: item?['referencia_nombre']);
@@ -429,6 +434,44 @@ class _CssiPageState extends State<CssiPage> {
                         const SizedBox(height: 12),
                         TextField(controller: fuenteEspecCtrl, decoration: const InputDecoration(labelText: 'Fuente espec.')),
                         const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: fechaIngresoCtrl,
+                                decoration: const InputDecoration(labelText: 'Fecha Ingreso', suffixIcon: Icon(Icons.calendar_today)),
+                                readOnly: true,
+                                onTap: () async {
+                                  final d = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime(2101));
+                                  if (d != null) setDialogState(() => fechaIngresoCtrl.text = d.toString().split(' ').first);
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: fechaReingresoCtrl,
+                                decoration: const InputDecoration(labelText: 'Fecha Reingreso', suffixIcon: Icon(Icons.calendar_today)),
+                                readOnly: true,
+                                onTap: () async {
+                                  final d = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime(2101));
+                                  if (d != null) setDialogState(() => fechaReingresoCtrl.text = d.toString().split(' ').first);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: fechaCambioCtrl,
+                          decoration: const InputDecoration(labelText: 'Fecha Cambio', suffixIcon: Icon(Icons.calendar_today)),
+                          readOnly: true,
+                          onTap: () async {
+                            final d = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime(2101));
+                            if (d != null) setDialogState(() => fechaCambioCtrl.text = d.toString().split(' ').first);
+                          },
+                        ),
+                        const SizedBox(height: 12),
                         TextField(controller: obsCtrl, decoration: const InputDecoration(labelText: 'Observaciones'), maxLines: 2),
 
                         const SizedBox(height: 24),
@@ -513,6 +556,9 @@ class _CssiPageState extends State<CssiPage> {
                               'reclutador': toUpper(reclutadorCtrl.text),
                               'fuente_reclutamiento': toUpper(fuenteCtrl.text),
                               'fuente_reclutamiento_espec': toUpper(fuenteEspecCtrl.text),
+                              'fecha_ingreso': fechaIngresoCtrl.text.isEmpty ? null : fechaIngresoCtrl.text,
+                              'fecha_reingreso': fechaReingresoCtrl.text.isEmpty ? null : fechaReingresoCtrl.text,
+                              'fecha_cambio': fechaCambioCtrl.text.isEmpty ? null : fechaCambioCtrl.text,
                               'observaciones': toUpper(obsCtrl.text),
                               'referencia_nombre': toUpper(refNombreCtrl.text),
                               'referencia_telefono': toUpper(refTelCtrl.text),
