@@ -334,7 +334,7 @@ class _CssiPageState extends State<CssiPage> {
                               child: DropdownButtonFormField<String>(
                                 value: genero,
                                 decoration: const InputDecoration(labelText: 'Género'),
-                                items: ['FEMENINO', 'MASCULINO'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                                items: ['HOMBRE', 'MUJER'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
                                 onChanged: (v) => setDialogState(() => genero = v),
                               ),
                             ),
