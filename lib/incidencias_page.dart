@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/notification_service.dart';
 
 class IncidenciasPage extends StatefulWidget {
   const IncidenciasPage({super.key});
@@ -161,13 +162,13 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                       if (diasController.text.isEmpty) return;
                       
                       final data = {
-                        'nombre_usuario': _userFullName,
+                        if (!isEditing) 'nombre_usuario': _userFullName,
                         'periodo': periodController.text,
                         'dias': int.parse(diasController.text),
                         'fecha_inicio': fechaInicio.toIso8601String(),
                         'fecha_fin': fechaFin.toIso8601String(),
                         'fecha_regreso': fechaRegreso.toIso8601String(),
-                        'usuario_id': Supabase.instance.client.auth.currentUser!.id,
+                        if (!isEditing) 'usuario_id': Supabase.instance.client.auth.currentUser!.id,
                       };
 
                       try {
@@ -175,6 +176,12 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                           await Supabase.instance.client.from('incidencias').update(data).eq('id', incidencia['id']);
                         } else {
                           await Supabase.instance.client.from('incidencias').insert(data);
+                          // Notificar a administradores (global)
+                          await NotificationService.send(
+                            title: 'Nueva Incidencia',
+                            message: '$_userFullName ha creado una nueva petición.',
+                            type: 'new_incidencia',
+                          );
                         }
                         if (mounted) {
                           Navigator.pop(context);
@@ -314,6 +321,13 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
                                     _showIncidenciaForm(incidencia: inc);
                                   } else {
                                     await Supabase.instance.client.from('incidencias').update({'status': val}).eq('id', inc['id']);
+                                    // Notificar al usuario del cambio de estado
+                                    await NotificationService.send(
+                                      title: 'Tu incidencia fue $val',
+                                      message: 'El estado de tu petición ha cambiado a $val.',
+                                      userId: inc['usuario_id'],
+                                      type: 'incidencia_status',
+                                    );
                                     _fetchIncidencias();
                                   }
                                 },

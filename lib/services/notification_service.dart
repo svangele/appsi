@@ -42,4 +42,21 @@ class NotificationService {
   static Future<void> deleteNotification(String id) async {
     await client.from('notifications').delete().eq('id', id);
   }
+
+  /// Envía una nueva notificación
+  static Future<void> send({
+    required String title,
+    required String message,
+    String type = 'incidencia_alert',
+    String? userId,
+    Map<String, dynamic>? metadata,
+  }) async {
+    await client.from('notifications').insert({
+      'title': title,
+      'message': message,
+      'type': type,
+      'user_id': userId,
+      'metadata': metadata ?? {},
+    });
+  }
 }
