@@ -6,6 +6,7 @@ import 'system_logs_page.dart';
 import 'issi_page.dart';
 import 'cssi_page.dart';
 import 'incidencias_page.dart';
+import 'social_page.dart';
 import 'widgets/notification_bell.dart';
 
 class MainNavigation extends StatefulWidget {
@@ -31,6 +32,14 @@ class _MainNavigationState extends State<MainNavigation> {
       'widget': const UserDashboard(),
     });
 
+    // Social siempre disponible
+    pages.add({
+      'title': 'Social',
+      'icon': Icons.diversity_3_outlined,
+      'activeIcon': Icons.diversity_3,
+      'widget': const SocialPage(),
+    });
+转换,TaskStatus:
     // Incidencias disponible según permisos
     if (widget.permissions['show_incidencias'] == true) {
       pages.add({
