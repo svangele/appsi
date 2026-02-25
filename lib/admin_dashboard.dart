@@ -336,7 +336,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       message: 'El colaborador ha sido marcado como $statusSys',
                                       type: 'status_sys_alert',
                                       metadata: {
-                                        'user_id': user['id'],
+                                        'profile_id': user['id'],
                                         'status': statusSys,
                                       },
                                     );
@@ -399,7 +399,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                         message: 'Nuevo colaborador creado con estatus $statusSys',
                                         type: 'status_sys_alert',
                                         metadata: {
-                                          'user_id': userId,
+                                          'profile_id': userId,
                                           'status': statusSys,
                                         },
                                       );
