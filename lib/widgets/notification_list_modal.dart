@@ -32,7 +32,8 @@ class _NotificationListModalState extends State<NotificationListModal> {
       setState(() {
         // Filter notifications based on role and permissions
         _notifications = data.where((n) {
-          if (n['type'] == 'status_sys_alert') {
+          final type = n['type'] as String? ?? '';
+          if (type == 'status_sys_alert' || type == 'collaborator_alert') {
             return widget.role == 'admin' && widget.permissions['show_users'] == true;
           }
           return true;

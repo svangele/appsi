@@ -334,7 +334,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     await NotificationService.send(
                                       title: 'Estatus Sys: ${nombreController.text} ${paternoController.text}',
                                       message: 'El colaborador ha sido marcado como $statusSys',
-                                      type: 'status_sys_alert',
+                                      type: 'collaborator_alert',
                                       metadata: {
                                         'profile_id': user['id'],
                                         'status': statusSys,
@@ -397,7 +397,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       await NotificationService.send(
                                         title: 'Estatus Sys: ${nombreController.text} ${paternoController.text}',
                                         message: 'Nuevo colaborador creado con estatus $statusSys',
-                                        type: 'status_sys_alert',
+                                        type: 'collaborator_alert',
                                         metadata: {
                                           'profile_id': userId,
                                           'status': statusSys,
