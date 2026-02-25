@@ -39,7 +39,7 @@ class _MainNavigationState extends State<MainNavigation> {
       'activeIcon': Icons.diversity_3,
       'widget': const SocialPage(),
     });
-转换,TaskStatus:
+
     // Incidencias disponible según permisos
     if (widget.permissions['show_incidencias'] == true) {
       pages.add({
