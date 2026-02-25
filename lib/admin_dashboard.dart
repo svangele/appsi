@@ -130,6 +130,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   void _showUserForm({Map<String, dynamic>? user}) {
     final isEditing = user != null;
+    final isGrantingAccess = isEditing && (user['email'] == null || user['email'].toString().isEmpty);
     final theme = Theme.of(context);
     final nombreController = TextEditingController(text: user?['nombre']);
     final paternoController = TextEditingController(text: user?['paterno']);
@@ -183,8 +184,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          isEditing ? 'Editar Usuario' : 'Crear Nuevo Usuario',
-                          style: Theme.of(context).textTheme.titleLarge,
+                          isGrantingAccess ? 'Conceder Acceso' : (isEditing ? 'Editar Usuario' : 'Crear Nuevo Usuario'),
+                          style: theme.textTheme.titleLarge,
                         ),
                         IconButton(
                           icon: const Icon(Icons.close),
@@ -210,7 +211,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 16),
-                      if (!isEditing) ...[
+                      if (!isEditing || isGrantingAccess) ...[
                         TextField(
                           controller: passwordController,
                           decoration: const InputDecoration(labelText: 'Contraseña', prefixIcon: Icon(Icons.lock)),
@@ -303,7 +304,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () async {
-                              if (!isEditing) {
+                              if (!isEditing || isGrantingAccess) {
                                 if (emailController.text.trim().isEmpty || passwordController.text.trim().isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(content: Text('Correo y contraseña son obligatorios')),
@@ -318,7 +319,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 }
                               }
                               try {
-                                if (isEditing) {
+                                if (isEditing && !isGrantingAccess) {
                                   await Supabase.instance.client.rpc('update_user_admin', params: {
                                     'user_id_param': user['id'],
                                     'new_email': emailController.text.trim(),
@@ -328,13 +329,37 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     'is_blocked_param': isBlocked,
                                     'new_permissions': permissions,
                                   });
+                                } else if (isGrantingAccess) {
+                                  // Grant access to an existing profile
+                                  await Supabase.instance.client.rpc('create_user_admin', params: {
+                                    'email': emailController.text.trim(),
+                                    'password': passwordController.text.trim(),
+                                    'full_name': '${nombreController.text} ${paternoController.text} ${maternoController.text}'.trim(),
+                                    'user_role': role,
+                                    'user_id_param': user['id'], // Link to existing profile
+                                  });
+                                  // Update profile with credentials and set status to ACTIVO
+                                  await Supabase.instance.client.from('profiles').update({
+                                    'drp_user': drpUser.text.trim(),
+                                    'drp_pass': drpPass.text.trim(),
+                                    'gp_user': gpUser.text.trim(),
+                                    'gp_pass': gpPass.text.trim(),
+                                    'bitrix_user': bitrixUser.text.trim(),
+                                    'bitrix_pass': bitrixPass.text.trim(),
+                                    'ek_user': ekUser.text.trim(),
+                                    'ek_pass': ekPass.text.trim(),
+                                    'otro_user': otroUser.text.trim(),
+                                    'otro_pass': otroPass.text.trim(),
+                                    'status_sys': 'ACTIVO', // Set to ACTIVO when granting access
+                                  }).eq('id', user['id']);
                                 } else {
-                                  // 1. Create the user via RPC
+                                  // Creating new user
                                   final response = await Supabase.instance.client.rpc('create_user_admin', params: {
                                     'email': emailController.text.trim(),
                                     'password': passwordController.text.trim(),
                                     'full_name': '${nombreController.text} ${paternoController.text} ${maternoController.text}'.trim(),
                                     'user_role': role,
+                                    'user_id_param': null, // No existing profile to link
                                   });
 
                                   final userId = response as String?;
@@ -361,7 +386,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   _fetchUsers();
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(isEditing ? 'Usuario actualizado' : 'Usuario creado con éxito'),
+                                      content: Text(isGrantingAccess ? 'Acceso concedido exitosamente' : (isEditing ? 'Usuario actualizado' : 'Usuario creado')),
                                       backgroundColor: const Color(0xFFB1CB34),
                                     ),
                                   );
@@ -374,7 +399,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 }
                               }
                             },
-                            child: Text(isEditing ? 'GUARDAR' : 'CREAR'),
+                            child: Text(isGrantingAccess ? 'CONCEDER ACCESO' : (isEditing ? 'GUARDAR' : 'CREAR')),
                           ),
                         ),
                       ],

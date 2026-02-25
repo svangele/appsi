@@ -178,7 +178,7 @@ class _CssiPageState extends State<CssiPage> {
     String? estadoCivil = item?['estado_civil'];
     String? escolaridad = item?['escolaridad'];
     String? credito = item?['credito'];
-    String? statusSys = item?['status_sys'] ?? 'ACTIVO';
+    String? statusSys = item?['status_sys'] ?? 'CAMBIO';
     String? statusRh = item?['status_rh'] ?? 'ACTIVO';
     XFile? pickedFile;
     String? currentFotoUrl = item?['foto_url'];
@@ -590,6 +590,12 @@ class _CssiPageState extends State<CssiPage> {
                               if (mounted) {
                                 Navigator.pop(context);
                                 _fetchItems();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(isEditing ? 'Colaborador actualizado exitosamente' : 'Colaborador creado exitosamente (Estado: CAMBIO)'),
+                                    backgroundColor: const Color(0xFFB1CB34),
+                                  ),
+                                );
                               }
                             } catch (e) {
                                setDialogState(() => saving = false);
