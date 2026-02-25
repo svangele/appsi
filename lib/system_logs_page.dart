@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'widgets/page_header.dart';
 
 class SystemLogsPage extends StatefulWidget {
   const SystemLogsPage({super.key});
@@ -96,107 +97,75 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
     
     return Column(
       children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.05),
-            border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        PageHeader(
+          title: 'Logs del Sistema',
+          subtitle: 'Actividad real capturada desde la base de datos',
+          trailing: _isLoading 
+            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) 
+            : const Icon(Icons.show_chart, color: Colors.white),
+          bottom: [
+            _buildChartSection(theme),
+            const SizedBox(height: 16),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Logs del Sistema',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Actividad real capturada desde la base de datos',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                      ),
-                    ],
+                  _buildDateSelector(
+                    label: _startDate == null ? 'Desde' : _formatDateOnly(_startDate!),
+                    icon: Icons.calendar_today,
+                    onTap: () async {
+                      final d = await showDatePicker(
+                        context: context,
+                        initialDate: _startDate ?? DateTime.now(),
+                        firstDate: DateTime(2024),
+                        lastDate: DateTime.now(),
+                      );
+                      if (d != null) {
+                        setState(() => _startDate = d);
+                        _fetchLogs();
+                      }
+                    },
                   ),
-                  _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.show_chart, color: Colors.blueAccent),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: Icon(Icons.arrow_forward, size: 16, color: Colors.white70),
+                  ),
+                  _buildDateSelector(
+                    label: _endDate == null ? 'Hasta' : _formatDateOnly(_endDate!),
+                    icon: Icons.event,
+                    onTap: () async {
+                      final d = await showDatePicker(
+                        context: context,
+                        initialDate: _endDate ?? DateTime.now(),
+                        firstDate: _startDate ?? DateTime(2024),
+                        lastDate: DateTime.now(),
+                      );
+                      if (d != null) {
+                        setState(() => _endDate = d);
+                        _fetchLogs();
+                      }
+                    },
+                  ),
+                  if (_startDate != null || _endDate != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _startDate = null;
+                            _endDate = null;
+                          });
+                          _fetchLogs();
+                        },
+                        icon: const Icon(Icons.clear_all, size: 18, color: Colors.white),
+                        label: const Text('Limpiar', style: TextStyle(color: Colors.white)),
+                        style: TextButton.styleFrom(foregroundColor: Colors.white),
+                      ),
+                    ),
                 ],
               ),
-              const SizedBox(height: 24),
-              // Gráfica de Inicios de Sesión
-              _buildChartSection(theme),
-              const SizedBox(height: 24),
-              const Divider(),
-              const SizedBox(height: 16),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildDateSelector(
-                      label: _startDate == null ? 'Desde' : _formatDateOnly(_startDate!),
-                      icon: Icons.calendar_today,
-                      onTap: () async {
-                        final d = await showDatePicker(
-                          context: context,
-                          initialDate: _startDate ?? DateTime.now(),
-                          firstDate: DateTime(2024),
-                          lastDate: DateTime.now(),
-                        );
-                        if (d != null) {
-                          setState(() => _startDate = d);
-                          _fetchLogs();
-                        }
-                      },
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: Icon(Icons.arrow_forward, size: 16, color: Colors.grey),
-                    ),
-                    _buildDateSelector(
-                      label: _endDate == null ? 'Hasta' : _formatDateOnly(_endDate!),
-                      icon: Icons.event,
-                      onTap: () async {
-                        final d = await showDatePicker(
-                          context: context,
-                          initialDate: _endDate ?? DateTime.now(),
-                          firstDate: _startDate ?? DateTime(2024),
-                          lastDate: DateTime.now(),
-                        );
-                        if (d != null) {
-                          setState(() => _endDate = d);
-                          _fetchLogs();
-                        }
-                      },
-                    ),
-                    if (_startDate != null || _endDate != null)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: TextButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              _startDate = null;
-                              _endDate = null;
-                            });
-                            _fetchLogs();
-                          },
-                          icon: const Icon(Icons.clear_all, size: 18),
-                          label: const Text('Limpiar'),
-                          style: TextButton.styleFrom(foregroundColor: Colors.red),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
-            ],
-          ),
+            ),
+          ],
         ),
         Expanded(
           child: _isLoading 
@@ -258,14 +227,14 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
       children: [
         Row(
           children: [
-            const Icon(Icons.assessment_outlined, size: 18, color: Colors.grey),
+            const Icon(Icons.assessment_outlined, size: 18, color: Colors.white70),
             const SizedBox(width: 8),
             Text(
               'Inicios de Sesión (Última Semana)',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
+                color: Colors.white,
               ),
             ),
             const Spacer(),
@@ -277,10 +246,10 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
               ),
               child: Text(
                 'Total: $totalLogins',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
+                  color: Colors.white,
                 ),
               ),
             ),
@@ -305,7 +274,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: count > 0 ? theme.colorScheme.primary : Colors.grey[300],
+                        color: count > 0 ? Colors.white : Colors.white24,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -319,8 +288,8 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: count > 0 
-                            ? [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.7)]
-                            : [Colors.grey[200]!, Colors.grey[100]!],
+                            ? [Colors.white, Colors.white.withValues(alpha: 0.7)]
+                            : [Colors.white24, Colors.white12],
                         ),
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
                         boxShadow: count > 0 ? [
@@ -337,7 +306,7 @@ class _SystemLogsPageState extends State<SystemLogsPage> {
                       dayName,
                       style: TextStyle(
                         fontSize: 10,
-                        color: Colors.grey[600],
+                        color: Colors.white70,
                         fontWeight: entry.key.day == DateTime.now().day ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),

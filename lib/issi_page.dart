@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
+import 'widgets/page_header.dart';
 
 class IssiPage extends StatefulWidget {
   const IssiPage({super.key});
@@ -591,94 +592,72 @@ class _IssiPageState extends State<IssiPage> {
         : null,
       body: Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            color: theme.colorScheme.primary.withValues(alpha: 0.05),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          PageHeader(
+            title: 'ISSI - Inventario',
+            subtitle: 'Total: ${_items.length} elementos${totalFiltered != _items.length ? ' (mostrando $totalFiltered)' : ''}',
+            trailing: IconButton(
+              icon: const Icon(Icons.download_outlined, color: Colors.white),
+              tooltip: 'Exportar CSV',
+              onPressed: _exportCsv,
+            ),
+            bottom: [
+              TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Buscar por marca, modelo, N/S, ubicación...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() { _searchQuery = ''; _currentPage = 0; });
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                onChanged: (value) => setState(() { _searchQuery = value; _currentPage = 0; }),
+              ),
+              const SizedBox(height: 12),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
                   children: [
-                    Text(
-                      'ISSI - Inventario',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
+                    FilterChip(
+                      label: Text(_filterTipo ?? 'Tipo'),
+                      selected: _filterTipo != null,
+                      onSelected: (_) {
+                        _showFilterDialog('Tipo', _tipos, _filterTipo, (val) {
+                          setState(() { _filterTipo = val; _currentPage = 0; });
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    FilterChip(
+                      label: Text(_filterCondicion ?? 'Condición'),
+                      selected: _filterCondicion != null,
+                      onSelected: (_) {
+                        _showFilterDialog('Condición', _condiciones, _filterCondicion, (val) {
+                          setState(() { _filterCondicion = val; _currentPage = 0; });
+                        });
+                      },
+                    ),
+                    if (_filterTipo != null || _filterCondicion != null) ...[
+                      const SizedBox(width: 8),
+                      ActionChip(
+                        avatar: const Icon(Icons.clear, size: 16),
+                        label: const Text('Limpiar'),
+                        onPressed: () => setState(() { _filterTipo = null; _filterCondicion = null; _currentPage = 0; }),
                       ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.download_outlined, color: theme.colorScheme.primary),
-                      tooltip: 'Exportar CSV',
-                      onPressed: _exportCsv,
-                    ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Total: ${_items.length} elementos${totalFiltered != _items.length ? ' (mostrando $totalFiltered)' : ''}',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Buscar por marca, modelo, N/S, ubicación...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() { _searchQuery = ''; _currentPage = 0; });
-                            },
-                          )
-                        : null,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  ),
-                  onChanged: (value) => setState(() { _searchQuery = value; _currentPage = 0; }),
-                ),
-                const SizedBox(height: 12),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      FilterChip(
-                        label: Text(_filterTipo ?? 'Tipo'),
-                        selected: _filterTipo != null,
-                        onSelected: (_) {
-                          _showFilterDialog('Tipo', _tipos, _filterTipo, (val) {
-                            setState(() { _filterTipo = val; _currentPage = 0; });
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      FilterChip(
-                        label: Text(_filterCondicion ?? 'Condición'),
-                        selected: _filterCondicion != null,
-                        onSelected: (_) {
-                          _showFilterDialog('Condición', _condiciones, _filterCondicion, (val) {
-                            setState(() { _filterCondicion = val; _currentPage = 0; });
-                          });
-                        },
-                      ),
-                      if (_filterTipo != null || _filterCondicion != null) ...[
-                        const SizedBox(width: 8),
-                        ActionChip(
-                          avatar: const Icon(Icons.clear, size: 16),
-                          label: const Text('Limpiar'),
-                          onPressed: () => setState(() { _filterTipo = null; _filterCondicion = null; _currentPage = 0; }),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
           Expanded(
             child: _isLoading

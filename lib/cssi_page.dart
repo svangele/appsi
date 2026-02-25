@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
+import 'widgets/page_header.dart';
 
 class CssiPage extends StatefulWidget {
   final String role;
@@ -704,57 +705,36 @@ class _CssiPageState extends State<CssiPage> {
         : null,
       body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            color: theme.colorScheme.primary.withOpacity(0.05),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Colaboradores SSI',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.download_outlined, color: theme.colorScheme.primary),
-                      tooltip: 'Exportar CSV',
-                      onPressed: _exportCsv,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Total: ${_items.length} colaboradores${filtered.length != _items.length ? ' (mostrando ${filtered.length})' : ''}',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Buscar por nombre, CURP, RFC...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() { _searchQuery = ''; });
-                            },
-                          )
-                        : null,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                  onChanged: (v) => setState(() => _searchQuery = v),
-                ),
-              ],
+          PageHeader(
+            title: 'Colaboradores SSI',
+            subtitle: 'Total: ${_items.length} colaboradores${filtered.length != _items.length ? ' (mostrando ${filtered.length})' : ''}',
+            trailing: IconButton(
+              icon: const Icon(Icons.download_outlined, color: Colors.white),
+              tooltip: 'Exportar CSV',
+              onPressed: _exportCsv,
             ),
+            bottom: [
+              TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Buscar por nombre, CURP, RFC...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() { _searchQuery = ''; });
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                onChanged: (v) => setState(() => _searchQuery = v),
+              ),
+            ],
           ),
           Expanded(
             child: _isLoading

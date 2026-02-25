@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math';
+import 'widgets/page_header.dart';
 
 class SocialPage extends StatefulWidget {
   const SocialPage({super.key});
@@ -78,7 +79,33 @@ class _SocialPageState extends State<SocialPage> {
     return Scaffold(
       body: Column(
         children: [
-          _buildHeader(theme),
+          PageHeader(
+            title: 'Cumpleaños 🎂',
+            subtitle: 'Celebrando a nuestros colaboradores en ${_months[_selectedMonth - 1]}',
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: DropdownButton<int>(
+                value: _selectedMonth,
+                dropdownColor: theme.colorScheme.primary,
+                underline: const SizedBox(),
+                icon: const Icon(Icons.calendar_month, color: Colors.white, size: 20),
+                items: List.generate(12, (index) => DropdownMenuItem(
+                  value: index + 1,
+                  child: Text(
+                    _months[index],
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                )),
+                onChanged: (val) {
+                  if (val != null) setState(() => _selectedMonth = val);
+                },
+              ),
+            ),
+          ),
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -91,64 +118,6 @@ class _SocialPageState extends State<SocialPage> {
     );
   }
 
-  Widget _buildHeader(ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Cumpleaños 🎂',
-                  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: DropdownButton<int>(
-                    value: _selectedMonth,
-                    dropdownColor: theme.colorScheme.primary,
-                    underline: const SizedBox(),
-                    icon: const Icon(Icons.calendar_month, color: Colors.white, size: 20),
-                    items: List.generate(12, (index) => DropdownMenuItem(
-                      value: index + 1,
-                      child: Text(
-                        _months[index],
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                    )),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedMonth = val);
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Celebrando a nuestros colaboradores en ${_months[_selectedMonth - 1]}',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 14),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildBirthdayList(List<Map<String, dynamic>> items, ThemeData theme) {
     return ListView(

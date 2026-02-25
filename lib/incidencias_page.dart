@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/notification_service.dart';
+import 'widgets/page_header.dart';
 
 class IncidenciasPage extends StatefulWidget {
   const IncidenciasPage({super.key});
@@ -251,27 +252,9 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
       ),
       body: Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            color: theme.colorScheme.primary.withValues(alpha: 0.05),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Incidencias y Peticiones',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Total: ${_incidencias.length} registros',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-              ],
-            ),
+          PageHeader(
+            title: 'Incidencias y Peticiones',
+            subtitle: 'Total: ${_incidencias.length} registros',
           ),
           Expanded(
             child: _isLoading 
