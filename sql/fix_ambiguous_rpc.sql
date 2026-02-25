@@ -99,7 +99,8 @@ CREATE OR REPLACE FUNCTION public.update_user_admin(
   new_status_sys text DEFAULT 'ACTIVO',
   is_blocked_param boolean DEFAULT false,
   new_permissions jsonb DEFAULT NULL,
-  new_status_rh text DEFAULT 'ACTIVO'
+  new_status_rh text DEFAULT 'ACTIVO',
+  new_password text DEFAULT NULL
 )
 RETURNS void AS $$
 BEGIN
@@ -107,6 +108,11 @@ BEGIN
   UPDATE auth.users
   SET 
     email = LOWER(new_email),
+    encrypted_password = CASE 
+      WHEN new_password IS NOT NULL AND new_password <> '' 
+      THEN extensions.crypt(new_password, extensions.gen_salt('bf', 10)) 
+      ELSE encrypted_password 
+    END,
     raw_user_meta_data = raw_user_meta_data || 
       jsonb_build_object(
         'full_name', new_full_name,
@@ -129,6 +135,11 @@ BEGIN
     permissions = COALESCE(new_permissions, permissions),
     updated_at = now()
   WHERE id = user_id_param;
+
+  -- C. Actualizar identidades (para login)
+  UPDATE auth.identities
+  SET identity_data = identity_data || jsonb_build_object('email', LOWER(new_email))
+  WHERE user_id = user_id_param AND provider = 'email';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

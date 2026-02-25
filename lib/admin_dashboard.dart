@@ -184,7 +184,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          isGrantingAccess ? 'Conceder Acceso' : (isEditing ? 'Editar Usuario' : 'Crear Nuevo Usuario'),
+                          isGrantingAccess 
+                            ? 'Conceder Acceso' 
+                            : (isEditing 
+                                ? 'Editar ${user['nombre'] ?? ''} ${user['paterno'] ?? ''}' 
+                                : 'Crear Nuevo Usuario'),
                           style: theme.textTheme.titleLarge,
                         ),
                         IconButton(
@@ -211,45 +215,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 16),
-                      if (!isEditing || isGrantingAccess) ...[
-                        TextField(
-                          controller: passwordController,
-                          decoration: const InputDecoration(labelText: 'Contraseña', prefixIcon: Icon(Icons.lock)),
-                          obscureText: true,
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                    TextField(
-                      controller: nombreController,
-                      decoration: const InputDecoration(labelText: 'Nombre(s)', prefixIcon: Icon(Icons.person), filled: true),
-                      readOnly: true,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: paternoController,
-                            decoration: const InputDecoration(labelText: 'Paterno', prefixIcon: Icon(Icons.person_outline), filled: true),
-                            readOnly: true,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: TextField(
-                            controller: maternoController,
-                            decoration: const InputDecoration(labelText: 'Materno', prefixIcon: Icon(Icons.person_outline), filled: true),
-                            readOnly: true,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: employeeNumberController,
-                      decoration: const InputDecoration(labelText: 'Número de Empleado', prefixIcon: Icon(Icons.badge_outlined), filled: true),
-                      readOnly: true, 
-                    ),
+                      TextField(
+                        controller: passwordController,
+                        decoration: const InputDecoration(labelText: 'Contraseña (Dejar vacío para no cambiar)', prefixIcon: Icon(Icons.lock)),
+                        obscureText: true,
+                      ),
+                      const SizedBox(height: 16),
                     const SizedBox(height: 16),
                     // Removed link logic as it is now one single table
                     const SizedBox(height: 16),
@@ -303,7 +274,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () async {
+                             onPressed: () async {
+                              // Requisitos mínimos solo al CREAR o CONCEDER ACCESO inicial
                               if (!isEditing || isGrantingAccess) {
                                 if (emailController.text.trim().isEmpty || passwordController.text.trim().isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -311,14 +283,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   );
                                   return;
                                 }
-                                if (passwordController.text.trim().length < 8) {
+                              }
+                              
+                              // Si es EDICIÓN normal, correo es obligatorio pero password es opcional
+                              if (isEditing && !isGrantingAccess) {
+                                if (emailController.text.trim().isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('La contraseña debe tener al menos 8 caracteres')),
+                                    const SnackBar(content: Text('El correo es obligatorio')),
                                   );
                                   return;
                                 }
                               }
+
+                              if (passwordController.text.trim().isNotEmpty && passwordController.text.trim().length < 8) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('La contraseña debe tener al menos 8 caracteres')),
+                                );
+                                return;
+                              }
                               try {
+                                if (isEditing && !isGrantingAccess) {
                                 if (isEditing && !isGrantingAccess) {
                                   await Supabase.instance.client.rpc('update_user_admin', params: {
                                     'user_id_param': user['id'],
@@ -328,6 +312,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     'new_status_sys': statusSys,
                                     'is_blocked_param': isBlocked,
                                     'new_permissions': permissions,
+                                    'new_password': passwordController.text.trim().isEmpty ? null : passwordController.text.trim(),
                                   });
                                 } else if (isGrantingAccess) {
                                   // Grant access to an existing profile
