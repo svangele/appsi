@@ -34,7 +34,7 @@ class _NotificationListModalState extends State<NotificationListModal> {
         _notifications = data.where((n) {
           final type = n['type'] as String? ?? '';
           if (type == 'collaborator_alert' || type == 'status_sys_alert') {
-            return widget.role == 'admin';
+            return widget.role == 'admin' && widget.permissions['show_users'] == true;
           }
           return true;
         }).toList();
