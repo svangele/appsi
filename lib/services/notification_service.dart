@@ -3,12 +3,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class NotificationService {
   static final client = Supabase.instance.client;
 
-  /// Obtiene el stream de notificaciones no leídas en tiempo real
-  static Stream<List<Map<String, dynamic>>> get unreadStream {
+  /// Stream de TODAS las notificaciones para filtrado client-side en tiempo real
+  static Stream<List<Map<String, dynamic>>> get allNotificationsStream {
     return client
         .from('notifications')
         .stream(primaryKey: ['id'])
-        .eq('is_read', false)
         .order('created_at', ascending: false);
   }
 

@@ -15,9 +15,19 @@ class NotificationBell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: NotificationService.unreadStream,
+      stream: NotificationService.allNotificationsStream,
       builder: (context, snapshot) {
-        final unreadCount = snapshot.data?.length ?? 0;
+        final all = snapshot.data ?? [];
+
+        // Count only unread notifications that this user is allowed to see
+        final unreadCount = all.where((n) {
+          if (n['is_read'] == true) return false;
+          final type = n['type'] as String? ?? '';
+          if (type == 'collaborator_alert' || type == 'status_sys_alert') {
+            return role == 'admin' && permissions['show_users'] == true;
+          }
+          return true;
+        }).length;
 
         return Stack(
           alignment: Alignment.center,
