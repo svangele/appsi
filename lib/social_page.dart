@@ -151,82 +151,92 @@ class _SocialPageState extends State<SocialPage> {
   }
 
   Widget _buildBirthdayList(List<Map<String, dynamic>> items, ThemeData theme) {
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(16),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        final date = DateTime.parse(item['fecha_nacimiento']);
-        final isToday = date.day == DateTime.now().day && date.month == DateTime.now().month;
-
-        return Card(
-          elevation: 1,
-          margin: const EdgeInsets.only(bottom: 12),
+      children: [
+        Card(
+          elevation: 2,
+          clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
           ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(12),
-            leading: Stack(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  backgroundImage: item['foto_url'] != null ? NetworkImage(item['foto_url']) : null,
-                  child: item['foto_url'] == null 
-                    ? Icon(Icons.person, color: theme.colorScheme.primary, size: 30)
-                    : null,
-                ),
-                if (isToday)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                      child: const Text('👑', style: TextStyle(fontSize: 14)),
+          child: Column(
+            children: List.generate(items.length, (index) {
+              final item = items[index];
+              final date = DateTime.parse(item['fecha_nacimiento']);
+              final isToday = date.day == DateTime.now().day && date.month == DateTime.now().month;
+
+              return Column(
+                children: [
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          backgroundImage: item['foto_url'] != null ? NetworkImage(item['foto_url']) : null,
+                          child: item['foto_url'] == null 
+                            ? Icon(Icons.person, color: theme.colorScheme.primary, size: 30)
+                            : null,
+                        ),
+                        if (isToday)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                              child: const Text('👑', style: TextStyle(fontSize: 14)),
+                            ),
+                          ),
+                      ],
                     ),
+                    title: Text(
+                      '${item['nombre']} ${item['paterno']}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    subtitle: Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            item['ubicacion'] ?? 'SIN UBICACIÓN',
+                            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${date.day}',
+                          style: TextStyle(
+                            fontSize: 24, 
+                            fontWeight: FontWeight.bold, 
+                            color: isToday ? Colors.orange : theme.colorScheme.primary
+                          ),
+                        ),
+                        if (isToday)
+                          const Text(
+                            'HOY',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.orange),
+                          ),
+                      ],
+                    ),
+                    onTap: () {}, // Efecto visual al tocar
                   ),
-              ],
-            ),
-            title: Text(
-              '${item['nombre']} ${item['paterno']}',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            subtitle: Row(
-              children: [
-                const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    item['ubicacion'] ?? 'SIN UBICACIÓN',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '${date.day}',
-                  style: TextStyle(
-                    fontSize: 22, 
-                    fontWeight: FontWeight.bold, 
-                    color: isToday ? Colors.orange : theme.colorScheme.primary
-                  ),
-                ),
-                if (isToday)
-                  const Text(
-                    'HOY',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.orange),
-                  ),
-              ],
-            ),
+                  if (index < items.length - 1)
+                    Divider(height: 1, indent: 84, endIndent: 16, color: Colors.grey[200]),
+                ],
+              );
+            }),
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 
