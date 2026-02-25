@@ -14,12 +14,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
   bool _isLoading = true;
   final _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _isAdmin = false;
 
   @override
   void initState() {
     super.initState();
+    _checkAdminRole();
     _fetchUsers();
     _fetchCollaborators();
+  }
+
+  Future<void> _checkAdminRole() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final role = user.userMetadata?['role'] ?? 'usuario';
+        setState(() => _isAdmin = role == 'admin');
+      }
+    } catch (e) {
+      debugPrint('Error checking admin role: $e');
+    }
   }
 
   Future<void> _fetchCollaborators() async {
@@ -496,19 +510,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final users = _filteredUsers;
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showUserForm(),
-        backgroundColor: theme.colorScheme.secondary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('NUEVO'),
-      ),
+      floatingActionButton: _isAdmin 
+        ? FloatingActionButton.extended(
+            onPressed: () => _showUserForm(),
+            backgroundColor: theme.colorScheme.secondary,
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.add),
+            label: const Text('NUEVO'),
+          )
+        : null,
       body: Column(
               children: [
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
-                  color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                  color: theme.colorScheme.primary.withOpacity(0.05),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -595,8 +611,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                             leading: CircleAvatar(
                               backgroundColor: role == 'admin' 
-                                  ? theme.colorScheme.tertiary.withValues(alpha: 0.1)
-                                  : theme.colorScheme.secondary.withValues(alpha: 0.1),
+                                  ? theme.colorScheme.tertiary.withOpacity(0.1)
+                                  : theme.colorScheme.secondary.withOpacity(0.1),
                               child: Icon(
                                 role == 'admin' ? Icons.admin_panel_settings : Icons.person_outline,
                                 color: role == 'admin' 
@@ -625,8 +641,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                         decoration: BoxDecoration(
                                           color: role == 'admin' 
-                                              ? theme.colorScheme.tertiary.withValues(alpha: 0.1)
-                                              : theme.colorScheme.primary.withValues(alpha: 0.1),
+                                              ? theme.colorScheme.tertiary.withOpacity(0.1)
+                                              : theme.colorScheme.primary.withOpacity(0.1),
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: Text(
@@ -645,7 +661,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: Colors.red.withValues(alpha: 0.1),
+                                            color: Colors.red.withOpacity(0.1),
                                             borderRadius: BorderRadius.circular(8),
                                           ),
                                           child: const Text(
@@ -668,41 +684,43 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 ],
                               ),
                             ),
-                            trailing: PopupMenuButton<String>(
-                              onSelected: (value) async {
-                                if (value == 'edit') {
-                                  _showUserForm(user: user);
-                                } else if (value == 'delete') {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: const Text('Eliminar Usuario'),
-                                      content: const Text('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.'),
-                                      actions: [
-                                        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCELAR')),
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(context, true),
-                                          style: TextButton.styleFrom(foregroundColor: Colors.red),
-                                          child: const Text('ELIMINAR'),
+                            trailing: _isAdmin 
+                              ? PopupMenuButton<String>(
+                                  onSelected: (value) async {
+                                    if (value == 'edit') {
+                                      _showUserForm(user: user);
+                                    } else if (value == 'delete') {
+                                      final confirm = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text('Eliminar Usuario'),
+                                          content: const Text('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.'),
+                                          actions: [
+                                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCELAR')),
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context, true),
+                                              style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                              child: const Text('ELIMINAR'),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm == true) {
-                                    try {
-                                      await Supabase.instance.client.rpc('delete_user_admin', params: {'user_id_param': user['id']});
-                                      _fetchUsers();
-                                    } catch (e) {
-                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                                      );
+                                      if (confirm == true) {
+                                        try {
+                                          await Supabase.instance.client.rpc('delete_user_admin', params: {'user_id_param': user['id']});
+                                          _fetchUsers();
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                                        }
+                                      }
                                     }
-                                  }
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                const PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit), title: Text('Editar'), dense: true)),
-                                const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, color: Colors.red), title: Text('Eliminar', style: TextStyle(color: Colors.red)), dense: true)),
-                              ],
-                            ),
+                                  },
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit), title: Text('Editar'), dense: true)),
+                                    const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete, color: Colors.red), title: Text('Eliminar', style: TextStyle(color: Colors.red)), dense: true)),
+                                  ],
+                                )
+                              : null,
                           ),
                         );
                       },
@@ -720,7 +738,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       child: Icon(
         icon,
         size: 14,
-        color: active ? const Color(0xFF344092) : Colors.grey.withValues(alpha: 0.3),
+        color: active ? const Color(0xFF344092) : Colors.grey.withOpacity(0.3),
       ),
     );
   }

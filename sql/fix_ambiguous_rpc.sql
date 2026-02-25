@@ -42,6 +42,11 @@ RETURNS uuid AS $$
 DECLARE
   new_user_id uuid;
 BEGIN
+  -- 0. Verificar permisos de administrador
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'No tienes permisos de administrador para crear usuarios.';
+  END IF;
+
   -- Si no se pasa un ID, generamos uno nuevo
   new_user_id := COALESCE(user_id_param, gen_random_uuid());
 
@@ -104,6 +109,11 @@ CREATE OR REPLACE FUNCTION public.update_user_admin(
 )
 RETURNS void AS $$
 BEGIN
+  -- 0. Verificar permisos de administrador
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'No tienes permisos de administrador para actualizar usuarios.';
+  END IF;
+
   -- A. Actualizar auth.users (Metadata para el JWT)
   UPDATE auth.users
   SET 

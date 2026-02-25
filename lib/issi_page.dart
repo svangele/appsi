@@ -19,6 +19,7 @@ class _IssiPageState extends State<IssiPage> {
   String? _filterCondicion;
   int _currentPage = 0;
   static const int _itemsPerPage = 20;
+  bool _isAdmin = false;
 
   static const List<String> _tipos = [
     'LAPTOP',
@@ -41,8 +42,21 @@ class _IssiPageState extends State<IssiPage> {
   @override
   void initState() {
     super.initState();
+    _checkAdminRole();
     _fetchItems();
     _fetchUsuarios();
+  }
+
+  Future<void> _checkAdminRole() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final role = user.userMetadata?['role'] ?? 'usuario';
+        setState(() => _isAdmin = role == 'admin');
+      }
+    } catch (e) {
+      debugPrint('Error checking admin role: $e');
+    }
   }
 
   Future<void> _fetchUsuarios() async {
@@ -566,13 +580,15 @@ class _IssiPageState extends State<IssiPage> {
     final totalFiltered = _filteredItems.length;
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showItemForm(),
-        backgroundColor: theme.colorScheme.secondary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('NUEVO'),
-      ),
+      floatingActionButton: _isAdmin 
+        ? FloatingActionButton.extended(
+            onPressed: () => _showItemForm(),
+            backgroundColor: theme.colorScheme.secondary,
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.add),
+            label: const Text('NUEVO'),
+          )
+        : null,
       body: Column(
         children: [
           Container(
@@ -758,33 +774,35 @@ class _IssiPageState extends State<IssiPage> {
                                     ],
                                   ),
                                 ),
-                                trailing: PopupMenuButton<String>(
-                                  onSelected: (value) {
-                                    if (value == 'edit') {
-                                      _showItemForm(item: item);
-                                    } else if (value == 'delete') {
-                                      _deleteItem(item['id']);
-                                    }
-                                  },
-                                  itemBuilder: (context) => [
-                                    const PopupMenuItem(
-                                      value: 'edit',
-                                      child: ListTile(
-                                        leading: Icon(Icons.edit),
-                                        title: Text('Editar'),
-                                        dense: true,
-                                      ),
-                                    ),
-                                    const PopupMenuItem(
-                                      value: 'delete',
-                                      child: ListTile(
-                                        leading: Icon(Icons.delete, color: Colors.red),
-                                        title: Text('Eliminar', style: TextStyle(color: Colors.red)),
-                                        dense: true,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                trailing: _isAdmin 
+                                  ? PopupMenuButton<String>(
+                                      onSelected: (value) {
+                                        if (value == 'edit') {
+                                          _showItemForm(item: item);
+                                        } else if (value == 'delete') {
+                                          _deleteItem(item['id']);
+                                        }
+                                      },
+                                      itemBuilder: (context) => [
+                                        const PopupMenuItem(
+                                          value: 'edit',
+                                          child: ListTile(
+                                            leading: Icon(Icons.edit),
+                                            title: Text('Editar'),
+                                            dense: true,
+                                          ),
+                                        ),
+                                        const PopupMenuItem(
+                                          value: 'delete',
+                                          child: ListTile(
+                                            leading: Icon(Icons.delete, color: Colors.red),
+                                            title: Text('Eliminar', style: TextStyle(color: Colors.red)),
+                                            dense: true,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : null,
                                 children: [
                                   _buildDetailRow('Ubicación', item['ubicacion']),
                                   if (item['n_s'] != null) _buildDetailRow('N/S', item['n_s']),
