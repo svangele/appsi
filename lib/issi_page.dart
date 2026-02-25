@@ -21,21 +21,21 @@ class _IssiPageState extends State<IssiPage> {
   static const int _itemsPerPage = 20;
 
   static const List<String> _tipos = [
-    'Laptop',
+    'LAPTOP',
     'PC',
-    'Impresora',
-    'Celular',
-    'Telefono',
-    'Disco Duro',
-    'Monitor',
-    'Mouse',
+    'IMPRESORA',
+    'CELULAR',
+    'TELEFONO',
+    'DISCO DURO',
+    'MONITOR',
+    'MOUSE',
   ];
 
   static const List<String> _condiciones = [
-    'Nuevo',
-    'Usado',
-    'Dañado',
-    'Sin Reparacion',
+    'NUEVO',
+    'USADO',
+    'DAÑADO',
+    'SIN REPARACION',
   ];
 
   @override
@@ -167,13 +167,15 @@ class _IssiPageState extends State<IssiPage> {
     final cpuController = TextEditingController(text: item?['cpu']);
     final ssdController = TextEditingController(text: item?['ssd']);
     final ramController = TextEditingController(text: item?['ram']);
+    final gpuController = TextEditingController(text: item?['gpu']);
+    final fechaActController = TextEditingController(text: item?['fecha_actualizacion']);
     final valorController = TextEditingController(
       text: item?['valor']?.toString() ?? '',
     );
     final observacionesController = TextEditingController(text: item?['observaciones']);
     
-    String tipo = item?['tipo'] ?? _tipos.first;
-    String condicion = item?['condicion'] ?? _condiciones.first;
+    String tipo = item?['tipo']?.toString().toUpperCase() ?? _tipos.first;
+    String condicion = item?['condicion']?.toString().toUpperCase() ?? _condiciones.first;
     
     String? selectedUsuarioId = item?['usuario_id'];
     String? selectedUsuarioNombre = item?['usuario_nombre'];
@@ -327,6 +329,34 @@ class _IssiPageState extends State<IssiPage> {
                       ],
                     ),
                     const SizedBox(height: 16),
+                    TextField(
+                      controller: gpuController,
+                      decoration: const InputDecoration(
+                        labelText: 'GPU',
+                        prefixIcon: Icon(Icons.videogame_asset_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: fechaActController,
+                      decoration: const InputDecoration(
+                        labelText: 'Fecha de Actualización',
+                        prefixIcon: Icon(Icons.calendar_today_outlined),
+                      ),
+                      readOnly: true,
+                      onTap: () async {
+                        final d = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2101),
+                        );
+                        if (d != null) {
+                          setDialogState(() => fechaActController.text = d.toString().split(' ').first);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       value: condicion,
                       decoration: const InputDecoration(
@@ -377,10 +407,12 @@ class _IssiPageState extends State<IssiPage> {
                                   'imei': imeiController.text.trim().isEmpty ? null : imeiController.text.trim(),
                                   'cpu': cpuController.text.trim().isEmpty ? null : cpuController.text.trim(),
                                   'ssd': ssdController.text.trim().isEmpty ? null : ssdController.text.trim(),
-                                  'ram': ramController.text.trim().isEmpty ? null : ramController.text.trim(),
+                                  'ram': ramController.text.trim().isEmpty ? null : ramController.text.trim().toUpperCase(),
+                                  'gpu': gpuController.text.trim().isEmpty ? null : gpuController.text.trim().toUpperCase(),
+                                  'fecha_actualizacion': fechaActController.text.isEmpty ? null : fechaActController.text,
                                   'valor': valorController.text.trim().isEmpty ? null : double.tryParse(valorController.text.trim()),
                                   'condicion': condicion,
-                                  'observaciones': observacionesController.text.trim().isEmpty ? null : observacionesController.text.trim(),
+                                  'observaciones': observacionesController.text.trim().isEmpty ? null : observacionesController.text.trim().toUpperCase(),
                                   'usuario_id': selectedUsuarioId,
                                   'usuario_nombre': selectedUsuarioNombre,
                                 };
@@ -471,7 +503,7 @@ class _IssiPageState extends State<IssiPage> {
       return;
     }
 
-    final headers = ['Ubicación', 'Tipo', 'Marca', 'Modelo', 'N/S', 'IMEI', 'CPU', 'SSD', 'RAM', 'Valor', 'Condición', 'Observaciones', 'Usuario'];
+    final headers = ['Ubicación', 'Tipo', 'Marca', 'Modelo', 'N/S', 'IMEI', 'CPU', 'SSD', 'RAM', 'GPU', 'Fecha Actualización', 'Valor', 'Condición', 'Observaciones', 'Usuario'];
     final rows = filtered.map((item) => [
       item['ubicacion'] ?? '',
       item['tipo'] ?? '',
@@ -482,6 +514,8 @@ class _IssiPageState extends State<IssiPage> {
       item['cpu'] ?? '',
       item['ssd'] ?? '',
       item['ram'] ?? '',
+      item['gpu'] ?? '',
+      item['fecha_actualizacion'] ?? '',
       item['valor']?.toString() ?? '',
       item['condicion'] ?? '',
       item['observaciones'] ?? '',
@@ -758,6 +792,8 @@ class _IssiPageState extends State<IssiPage> {
                                   if (item['cpu'] != null) _buildDetailRow('CPU', item['cpu']),
                                   if (item['ssd'] != null) _buildDetailRow('SSD', item['ssd']),
                                   if (item['ram'] != null) _buildDetailRow('RAM', item['ram']),
+                                  if (item['gpu'] != null) _buildDetailRow('GPU', item['gpu']),
+                                  if (item['fecha_actualizacion'] != null) _buildDetailRow('Fecha Actualización', item['fecha_actualizacion']),
                                   if (item['valor'] != null) _buildDetailRow('Valor', '\$${item['valor']}'),
                                   if (item['observaciones'] != null) _buildDetailRow('Observaciones', item['observaciones']),
                                   _buildDetailRow('Registrado por', item['usuario_nombre'] ?? 'Usuario'),
