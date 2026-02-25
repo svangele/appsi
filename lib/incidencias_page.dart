@@ -77,6 +77,127 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
     return parts.join(' y ');
   }
 
+  /// Años completos de antigüedad
+  int _calcYears() {
+    final base = _fechaReingreso ?? _fechaIngreso;
+    if (base == null) return 0;
+    final now = DateTime.now();
+    int years = now.year - base.year;
+    if (now.month < base.month || (now.month == base.month && now.day < base.day)) years--;
+    return years < 0 ? 0 : years;
+  }
+
+  /// Devuelve el índice (0-based) de la fila de la tabla que corresponde a los años del usuario
+  int _getRowIndex(int years) {
+    if (years <= 0) return -1;
+    if (years == 1) return 0;
+    if (years == 2) return 1;
+    if (years == 3) return 2;
+    if (years == 4) return 3;
+    if (years == 5) return 4;
+    if (years <= 10) return 5;
+    if (years <= 15) return 6;
+    if (years <= 20) return 7;
+    if (years <= 25) return 8;
+    if (years <= 30) return 9;
+    return 10; // 31-35+
+  }
+
+  void _showVacacionesTable() {
+    final years = _calcYears();
+    final highlightIdx = _getRowIndex(years);
+    final theme = Theme.of(context);
+    const rows = [
+      ['1 año', '12'],
+      ['2 años', '14'],
+      ['3 años', '16'],
+      ['4 años', '18'],
+      ['5 años', '20'],
+      ['6 a 10 años', '22'],
+      ['11 a 15 años', '24'],
+      ['16 a 20 años', '26'],
+      ['21 a 25 años', '28'],
+      ['26 a 30 años', '30'],
+      ['31 a 35 años', '32'],
+    ];
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.beach_access_outlined, color: theme.colorScheme.secondary),
+            const SizedBox(width: 8),
+            const Text('Días de Vacaciones'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Table(
+            border: TableBorder.all(color: Colors.grey[300]!, width: 0.8),
+            columnWidths: const {
+              0: FlexColumnWidth(2),
+              1: FlexColumnWidth(1),
+            },
+            children: [
+              // Header
+              TableRow(
+                decoration: BoxDecoration(color: Colors.grey[200]),
+                children: const [
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Text('Antigüedad', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Text('Días', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  ),
+                ],
+              ),
+              // Data rows
+              for (var i = 0; i < rows.length; i++)
+                TableRow(
+                  decoration: BoxDecoration(
+                    color: i == highlightIdx
+                        ? theme.colorScheme.secondary.withValues(alpha: 0.18)
+                        : (i.isEven ? Colors.white : Colors.grey[50]),
+                  ),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Text(
+                        rows[i][0],
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: i == highlightIdx ? FontWeight.bold : FontWeight.normal,
+                          color: i == highlightIdx ? theme.colorScheme.secondary : null,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Text(
+                        rows[i][1],
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: i == highlightIdx ? FontWeight.bold : FontWeight.normal,
+                          color: i == highlightIdx ? theme.colorScheme.secondary : null,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Tarjeta de antigüedad
   Widget _buildAntiguedadCard() {
     final base = _fechaReingreso ?? _fechaIngreso;
@@ -84,28 +205,34 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
     final theme = Theme.of(context);
     final label = _fechaReingreso != null ? 'Antigüedad (Reingreso)' : 'Antigüedad';
     final dateStr = '${base.day.toString().padLeft(2, '0')}/${base.month.toString().padLeft(2, '0')}/${base.year}';
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.secondary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: theme.colorScheme.secondary.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.workspace_premium_outlined, color: theme.colorScheme.secondary, size: 28),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-              Text(_calcAntiguedad(),
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.secondary)),
-              Text('Desde: $dateStr', style: const TextStyle(fontSize: 11, color: Colors.grey)),
-            ],
-          ),
-        ],
+    return GestureDetector(
+      onTap: _showVacacionesTable,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.secondary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: theme.colorScheme.secondary.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.workspace_premium_outlined, color: theme.colorScheme.secondary, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  Text(_calcAntiguedad(),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.secondary)),
+                  Text('Desde: $dateStr', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: theme.colorScheme.secondary.withValues(alpha: 0.6)),
+          ],
+        ),
       ),
     );
   }
