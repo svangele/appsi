@@ -30,11 +30,11 @@ class _NotificationListModalState extends State<NotificationListModal> {
     try {
       final data = await NotificationService.fetchRecent();
       setState(() {
-        // Filter notifications based on role and permissions
+        // Filter notifications based on role
         _notifications = data.where((n) {
           final type = n['type'] as String? ?? '';
-          if (type == 'status_sys_alert' || type == 'collaborator_alert') {
-            return widget.role == 'admin' && widget.permissions['show_users'] == true;
+          if (type == 'collaborator_alert' || type == 'status_sys_alert') {
+            return widget.role == 'admin';
           }
           return true;
         }).toList();

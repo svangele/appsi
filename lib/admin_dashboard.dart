@@ -331,15 +331,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                                   // Send notification if status is not ACTIVO
                                   if (statusSys != 'ACTIVO') {
-                                    await NotificationService.send(
-                                      title: 'Estatus Sys: ${nombreController.text} ${paternoController.text}',
-                                      message: 'El colaborador ha sido marcado como $statusSys',
-                                      type: 'collaborator_alert',
-                                      metadata: {
-                                        'profile_id': user['id'],
-                                        'status': statusSys,
-                                      },
-                                    );
+                                    try {
+                                      await NotificationService.send(
+                                        title: 'Estatus Sys: ${nombreController.text} ${paternoController.text}',
+                                        message: 'El colaborador ha sido marcado como $statusSys',
+                                        type: 'collaborator_alert',
+                                        metadata: {
+                                          'profile_id': user['id'],
+                                          'status': statusSys,
+                                        },
+                                      );
+                                      debugPrint('[NOTIF] ✅ Enviada: $statusSys para ${nombreController.text}');
+                                    } catch (notifErr) {
+                                      debugPrint('[NOTIF] ❌ Error al enviar: $notifErr');
+                                    }
                                   }
                                 } else if (isGrantingAccess) {
                                   // Grant access to an existing profile
@@ -394,15 +399,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                                     // Send notification if status is not ACTIVO
                                     if (statusSys != 'ACTIVO') {
-                                      await NotificationService.send(
-                                        title: 'Estatus Sys: ${nombreController.text} ${paternoController.text}',
-                                        message: 'Nuevo colaborador creado con estatus $statusSys',
-                                        type: 'collaborator_alert',
-                                        metadata: {
-                                          'profile_id': userId,
-                                          'status': statusSys,
-                                        },
-                                      );
+                                      try {
+                                        await NotificationService.send(
+                                          title: 'Estatus Sys: ${nombreController.text} ${paternoController.text}',
+                                          message: 'Nuevo colaborador creado con estatus $statusSys',
+                                          type: 'collaborator_alert',
+                                          metadata: {
+                                            'profile_id': userId,
+                                            'status': statusSys,
+                                          },
+                                        );
+                                        debugPrint('[NOTIF] ✅ Enviada (crear): $statusSys');
+                                      } catch (notifErr) {
+                                        debugPrint('[NOTIF] ❌ Error al enviar (crear): $notifErr');
+                                      }
                                     }
                                   }
                                 }
