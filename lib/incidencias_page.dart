@@ -29,14 +29,13 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
       // Fetch role and name
       final profile = await Supabase.instance.client
           .from('profiles')
-          .select('role, cssi_contributors(nombre, paterno, materno)')
+          .select('role, nombre, paterno, materno')
           .eq('id', user.id)
           .maybeSingle();
 
       if (profile != null) {
-        final contrib = profile['cssi_contributors'];
-        final fullName = contrib != null 
-            ? '${contrib['nombre']} ${contrib['paterno']} ${contrib['materno'] ?? ''}'.trim()
+        final fullName = (profile['nombre'] != null)
+            ? '${profile['nombre']} ${profile['paterno']} ${profile['materno'] ?? ''}'.trim()
             : user.email ?? 'Usuario';
         
         if (mounted) {

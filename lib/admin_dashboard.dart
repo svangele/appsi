@@ -193,10 +193,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     const SizedBox(height: 24),
                     DropdownButtonFormField<String>(
                       value: statusSys,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'System Sys',
-                        prefixIcon: const Icon(Icons.settings_suggest_outlined),
+                        prefixIcon: Icon(Icons.settings_suggest_outlined),
                         filled: true,
+                      ),
                       items: ['ACTIVO', 'BAJA', 'CAMBIO', 'ELIMINAR'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
                       onChanged: (val) => setDialogState(() => statusSys = val),
                     ),
@@ -303,14 +304,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     'new_status_sys': statusSys,
                                   });
 
-                                  // Bidirectional Sync: Update CSSI if linked
-                                  if (selectedCssiId != null) {
-                                    await Supabase.instance.client
-                                        .from('cssi_contributors')
-                                        .update({'status_sys': statusSys})
-                                        .eq('id', selectedCssiId!);
-                                  }
-                                } else {
+,ReplacementContent:                                } else {
                                   // 1. Create the user via RPC
                                   final response = await Supabase.instance.client.rpc('create_user_admin', params: {
                                     'email': emailController.text.trim(),
@@ -323,8 +317,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   if (userId != null) {
                                     // Update profile with extra data (collaborator + credentials)
                                     await Supabase.instance.client.from('profiles').update({
-                                      'cssi_id': selectedCssiId,
-                                      'numero_empleado': employeeNumberController.text.trim(),
+,ReplacementContent:                                      'numero_empleado': employeeNumberController.text.trim(),
                                       'drp_user': drpUser.text.trim(),
                                       'drp_pass': drpPass.text.trim(),
                                       'gp_user': gpUser.text.trim(),
@@ -338,14 +331,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       'status_sys': statusSys,
                                     }).eq('id', userId);
 
-                                    // Bidirectional Sync for New User
-                                    if (selectedCssiId != null) {
-                                      await Supabase.instance.client
-                                          .from('cssi_contributors')
-                                          .update({'status_sys': statusSys})
-                                          .eq('id', selectedCssiId!);
-                                    }
-                                  }
+,ReplacementContent:                                  }
                                 }
                                 if (mounted) {
                                   Navigator.pop(context);
