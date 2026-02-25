@@ -237,6 +237,142 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
     );
   }
 
+  /// Días de vacaciones según nueva ley 2023 y años de servicio
+  int _getDaysByYears(int years) {
+    if (years == 1) return 12;
+    if (years == 2) return 14;
+    if (years == 3) return 16;
+    if (years == 4) return 18;
+    if (years == 5) return 20;
+    if (years <= 10) return 22;
+    if (years <= 15) return 24;
+    if (years <= 20) return 26;
+    if (years <= 25) return 28;
+    if (years <= 30) return 30;
+    return 32;
+  }
+
+  /// Tabla de historial de vacaciones por periodo
+  Widget _buildHistorialVacaciones() {
+    final base = _fechaReingreso ?? _fechaIngreso;
+    if (base == null) return const SizedBox.shrink();
+
+    final now = DateTime.now();
+    final theme = Theme.of(context);
+    final completedYears = _calcYears();
+
+    // Build rows: from year 1 to completedYears + 1 (one future period)
+    final tableRows = <Map<String, dynamic>>[];
+    for (int y = 1; y <= completedYears + 1; y++) {
+      // Anniversary date for this year of service
+      final anniversary = DateTime(base.year + y, base.month, base.day);
+      final periodStart = anniversary.year - 1;
+      final periodLabel = '$periodStart - ${anniversary.year}';
+
+      // Days: old law if periodStart < 2023, new law otherwise
+      final int days = periodStart >= 2023
+          ? _getDaysByYears(y)
+          : (6 + (y - 1) * 2).clamp(0, 14);
+
+      final isCurrent = y == completedYears;       // last completed year
+      final isUpcoming = anniversary.isAfter(now); // anniversary not yet passed
+
+      tableRows.add({
+        'periodo': periodLabel,
+        'days': days,
+        'isCurrent': isCurrent,
+        'isUpcoming': isUpcoming,
+      });
+    }
+
+    if (tableRows.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Title
+          Container(
+            color: Colors.grey[100],
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                Icon(Icons.calendar_month_outlined, size: 18, color: theme.colorScheme.secondary),
+                const SizedBox(width: 8),
+                Text('Historial de Vacaciones',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: theme.colorScheme.secondary)),
+              ],
+            ),
+          ),
+          // Header row
+          Container(
+            color: Colors.grey[200],
+            child: Row(children: [
+              Expanded(child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text('Período', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              )),
+              SizedBox(width: 80, child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text('Días', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              )),
+            ]),
+          ),
+          // Data rows
+          ...tableRows.asMap().entries.map((entry) {
+            final i = entry.key;
+            final row = entry.value;
+            final isCurrent = row['isCurrent'] as bool;
+            final isUpcoming = row['isUpcoming'] as bool;
+
+            Color bgColor;
+            if (isCurrent) {
+              bgColor = theme.colorScheme.secondary.withValues(alpha: 0.15);
+            } else if (isUpcoming) {
+              bgColor = Colors.orange.withValues(alpha: 0.07);
+            } else {
+              bgColor = i.isEven ? Colors.white : Colors.grey[50]!;
+            }
+
+            return Container(
+              color: bgColor,
+              child: Row(children: [
+                Expanded(child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Text(
+                    row['periodo'] as String,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                      color: isCurrent ? theme.colorScheme.secondary : (isUpcoming ? Colors.orange[700] : null),
+                    ),
+                  ),
+                )),
+                SizedBox(width: 80, child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Text(
+                    '${row['days']}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                      color: isCurrent ? theme.colorScheme.secondary : (isUpcoming ? Colors.orange[700] : null),
+                    ),
+                  ),
+                )),
+              ]),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
   Future<void> _fetchIncidencias() async {
     setState(() => _isLoading = true);
     try {
@@ -478,6 +614,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
             subtitle: 'Total: ${_incidencias.length} registros',
           ),
           _buildAntiguedadCard(),
+          _buildHistorialVacaciones(),
           Expanded(
             child: _isLoading 
               ? const Center(child: CircularProgressIndicator())
