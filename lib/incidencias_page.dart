@@ -149,6 +149,35 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
       return;
     }
 
+    // Verificar antigüedad mínima de 1 año (solo para crear, no para editar, y no para admin)
+    if (!isEditing && _userRole != 'admin') {
+      final base = _fechaReingreso ?? _fechaIngreso;
+      if (base != null) {
+        final now = DateTime.now();
+        final years = now.year - base.year - ((now.month < base.month || (now.month == base.month && now.day < base.day)) ? 1 : 0);
+        if (years < 1) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              icon: const Icon(Icons.info_outline, color: Colors.orange, size: 36),
+              title: const Text('Antigüedad insuficiente', textAlign: TextAlign.center),
+              content: const Text(
+                'Recuerda que partiendo de tu fecha de ingreso o reingreso, debes de cumplir el año de servicios para poder ser válidas tus vacaciones.',
+                textAlign: TextAlign.center,
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Entendido'),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
+      }
+    }
+
     final periodController = TextEditingController(text: incidencia?['periodo'] ?? '2025 – 2026');
     final diasController = TextEditingController(text: incidencia?['dias']?.toString() ?? '');
     DateTime fechaInicio = incidencia != null ? DateTime.parse(incidencia['fecha_inicio']) : DateTime.now();
