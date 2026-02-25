@@ -62,7 +62,14 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
       
       if (mounted) {
         setState(() {
-          _incidencias = List<Map<String, dynamic>>.from(response);
+          _incidencias = List<Map<String, dynamic>>.from(response)
+            ..sort((a, b) {
+              const order = {'PENDIENTE': 0, 'APROBADA': 1, 'CANCELADA': 2};
+              final aOrder = order[a['status']] ?? 99;
+              final bOrder = order[b['status']] ?? 99;
+              if (aOrder != bOrder) return aOrder.compareTo(bOrder);
+              return (b['created_at'] as String).compareTo(a['created_at'] as String);
+            });
           _isLoading = false;
         });
       }
