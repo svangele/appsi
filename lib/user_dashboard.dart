@@ -28,7 +28,7 @@ class _UserDashboardState extends State<UserDashboard> {
       if (user != null && user.id.isNotEmpty) {
         final data = await Supabase.instance.client
             .from('profiles')
-            .select('*, cssi_contributors(*)')
+            .select('*')
             .eq('id', user.id)
             .maybeSingle();
         
@@ -94,10 +94,10 @@ class _UserDashboardState extends State<UserDashboard> {
                         child: CircleAvatar(
                           radius: 60,
                           backgroundColor: theme.colorScheme.secondary.withValues(alpha: 0.2),
-                          backgroundImage: (_profile?['cssi_contributors']?['foto_url'] != null && _profile?['cssi_contributors']?['foto_url'].toString().isNotEmpty == true)
-                              ? NetworkImage(_profile!['cssi_contributors']!['foto_url'])
+                          backgroundImage: (_profile?['foto_url'] != null && _profile?['foto_url'].toString().isNotEmpty == true)
+                              ? NetworkImage(_profile!['foto_url'])
                               : null,
-                          child: (_profile?['cssi_contributors']?['foto_url'] == null || _profile?['cssi_contributors']?['foto_url'].toString().isEmpty == true)
+                          child: (_profile?['foto_url'] == null || _profile?['foto_url'].toString().isEmpty == true)
                               ? Icon(Icons.person, size: 60, color: theme.colorScheme.secondary)
                               : null,
                         ),
@@ -150,8 +150,8 @@ class _UserDashboardState extends State<UserDashboard> {
                             ],
                           ),
                           const SizedBox(height: 24),
-                          if (_profile?['cssi_contributors'] != null) ...[
-                            _buildInfoRow(Icons.numbers, 'Número de empleado', _profile?['cssi_contributors']?['numero_empleado'] ?? '---'),
+                          if (_profile?['nombre'] != null) ...[
+                            _buildInfoRow(Icons.numbers, 'Número de empleado', _profile?['numero_empleado'] ?? '---'),
                             const SizedBox(height: 12),
                             _buildInfoRow(Icons.fingerprint, 'CURP', _profile?['cssi_contributors']?['curp'] ?? '---'),
                             const SizedBox(height: 12),

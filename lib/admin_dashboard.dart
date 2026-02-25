@@ -25,8 +25,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Future<void> _fetchCollaborators() async {
     try {
       final data = await Supabase.instance.client
-          .from('cssi_contributors')
+          .from('profiles')
           .select('id, nombre, paterno, materno, numero_empleado, status_sys')
+          .not('nombre', 'is', null)
           .order('nombre');
       setState(() => _collaborators = List<Map<String, dynamic>>.from(data));
     } catch (e) {
@@ -39,7 +40,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     try {
       final data = await Supabase.instance.client
           .from('profiles')
-          .select('*, cssi_contributors(status_sys)')
+          .select('*')
           .order('created_at', ascending: false);
       setState(() => _users = List<Map<String, dynamic>>.from(data));
     } catch (e) {
@@ -135,8 +136,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final emailController = TextEditingController(text: user?['email']);
     final passwordController = TextEditingController();
     String role = user?['role'] ?? 'usuario';
-    String? statusSys = user?['cssi_contributors']?['status_sys'] ?? user?['status_sys'] ?? 'ACTIVO';
-    String? selectedCssiId = user?['cssi_id'];
+    String? statusSys = user?['status_sys'] ?? 'ACTIVO';
     bool isBlocked = user?['is_blocked'] ?? false;
     final permissions = Map<String, bool>.from(user?['permissions'] ?? {
       'show_users': false,
@@ -197,14 +197,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         labelText: 'System Sys',
                         prefixIcon: const Icon(Icons.settings_suggest_outlined),
                         filled: true,
-                        fillColor: selectedCssiId != null ? Colors.blue[50] : const Color(0xFFF5F5F5),
-                        helperText: selectedCssiId != null ? 'Edita el estado del Colaborador vinculado' : 'Requiere vincular Colaborador para gestionar estado',
-                        helperStyle: TextStyle(color: selectedCssiId != null ? Colors.blue[700] : Colors.orange[800], fontWeight: FontWeight.bold),
-                      ),
-                      isExpanded: true,
-                      // Now editable ONLY if selectedCssiId is NOT null
                       items: ['ACTIVO', 'BAJA', 'CAMBIO', 'ELIMINAR'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                      onChanged: selectedCssiId == null ? null : (val) => setDialogState(() => statusSys = val),
+                      onChanged: (val) => setDialogState(() => statusSys = val),
                     ),
                     const SizedBox(height: 24),
                     TextField(
@@ -232,39 +226,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       readOnly: true, // Only filled via collaborator selection
                     ),
                     const SizedBox(height: 16),
-                    DropdownButtonFormField<String?>(
-                      value: selectedCssiId,
-                      decoration: const InputDecoration(
-                        labelText: 'Vincular con Colaborador CSSI (Opcional)',
-                        prefixIcon: Icon(Icons.link),
-                      ),
-                      isExpanded: true,
-                      items: [
-                        const DropdownMenuItem<String?>(
-                          value: null,
-                          child: Text('Ninguno / Externo'),
-                        ),
-                        ..._collaborators.map((colab) {
-                          final fullName = '${colab['nombre']} ${colab['paterno']}';
-                          final numEmp = colab['numero_empleado'] ?? 'N/A';
-                          return DropdownMenuItem<String?>(
-                            value: colab['id'],
-                            child: Text('$numEmp | $fullName'),
-                          );
-                        }),
-                      ],
-                      onChanged: (val) {
-                        setDialogState(() {
-                          selectedCssiId = val;
-                          if (val != null) {
-                            final colab = _collaborators.firstWhere((c) => c['id'] == val);
-                            nameController.text = '${colab['nombre']} ${colab['paterno']} ${colab['materno'] ?? ''}'.trim().toUpperCase();
-                            employeeNumberController.text = colab['numero_empleado'] ?? '';
-                            statusSys = colab['status_sys'] ?? 'ACTIVO';
-                          }
-                        });
-                      },
-                    ),
+                    // Removed link logic as it is now one single table
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       value: role,
@@ -338,20 +300,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     'new_email': emailController.text.trim(),
                                     'new_full_name': nameController.text.trim(),
                                     'new_role': role,
-                                    'new_cssi_id': selectedCssiId,
-                                    'new_numero_empleado': employeeNumberController.text.trim(),
-                                    'is_blocked_param': isBlocked,
-                                    'new_permissions': permissions,
-                                    'new_drp_user': drpUser.text.trim(),
-                                    'new_drp_pass': drpPass.text.trim(),
-                                    'new_gp_user': gpUser.text.trim(),
-                                    'new_gp_pass': gpPass.text.trim(),
-                                    'new_bitrix_user': bitrixUser.text.trim(),
-                                    'new_bitrix_pass': bitrixPass.text.trim(),
-                                    'new_ek_user': ekUser.text.trim(),
-                                    'new_ek_pass': ekPass.text.trim(),
-                                    'new_otro_user': otroUser.text.trim(),
-                                    'new_otro_pass': otroPass.text.trim(),
                                     'new_status_sys': statusSys,
                                   });
 

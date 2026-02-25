@@ -31,8 +31,9 @@ class _CssiPageState extends State<CssiPage> {
     setState(() => _isLoading = true);
     try {
       final data = await Supabase.instance.client
-          .from('cssi_contributors')
+          .from('profiles')
           .select()
+          .not('nombre', 'is', null)
           .order('created_at', ascending: false);
       if (mounted) {
         setState(() {
@@ -110,7 +111,7 @@ class _CssiPageState extends State<CssiPage> {
 
     if (confirmed == true) {
       try {
-        await Supabase.instance.client.from('cssi_contributors').delete().eq('id', id);
+        await Supabase.instance.client.from('profiles').delete().eq('id', id);
         _fetchItems();
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
@@ -567,8 +568,7 @@ class _CssiPageState extends State<CssiPage> {
                               'status_sys': statusSys,
                               'status_rh': statusRh,
                               'foto_url': currentFotoUrl,
-                              'usuario_id': Supabase.instance.client.auth.currentUser?.id,
-                              'usuario_nombre': 'ADMIN',
+                              // No longer need separate usuario_id as it is the same record
                             };
 
                             try {
@@ -583,9 +583,9 @@ class _CssiPageState extends State<CssiPage> {
                               }
 
                               if (isEditing) {
-                                await Supabase.instance.client.from('cssi_contributors').update(data).eq('id', item['id']);
+                                await Supabase.instance.client.from('profiles').update(data).eq('id', item['id']);
                               } else {
-                                await Supabase.instance.client.from('cssi_contributors').insert(data);
+                                await Supabase.instance.client.from('profiles').insert(data);
                               }
                               if (mounted) {
                                 Navigator.pop(context);

@@ -30,7 +30,7 @@ class _SocialPageState extends State<SocialPage> {
     try {
       // Obtenemos todos los colaboradores que tengan fecha de nacimiento
       final data = await Supabase.instance.client
-          .from('cssi_contributors')
+          .from('profiles')
           .select('nombre, paterno, materno, fecha_nacimiento, foto_url, ubicacion')
           .not('fecha_nacimiento', 'is', null)
           .order('nombre');
