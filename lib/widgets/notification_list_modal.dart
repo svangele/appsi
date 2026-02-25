@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
 
 class NotificationListModal extends StatefulWidget {
-  const NotificationListModal({super.key});
+  final String role;
+  final Map<String, dynamic> permissions;
+
+  const NotificationListModal({
+    super.key,
+    required this.role,
+    required this.permissions,
+  });
 
   @override
   State<NotificationListModal> createState() => _NotificationListModalState();
@@ -23,7 +30,13 @@ class _NotificationListModalState extends State<NotificationListModal> {
     try {
       final data = await NotificationService.fetchRecent();
       setState(() {
-        _notifications = data;
+        // Filter notifications based on role and permissions
+        _notifications = data.where((n) {
+          if (n['type'] == 'status_sys_alert') {
+            return widget.role == 'admin' && widget.permissions['show_users'] == true;
+          }
+          return true;
+        }).toList();
         _isLoading = false;
       });
     } catch (e) {

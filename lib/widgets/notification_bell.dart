@@ -3,7 +3,14 @@ import '../services/notification_service.dart';
 import 'notification_list_modal.dart';
 
 class NotificationBell extends StatelessWidget {
-  const NotificationBell({super.key});
+  final String role;
+  final Map<String, dynamic> permissions;
+
+  const NotificationBell({
+    super.key,
+    required this.role,
+    required this.permissions,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +32,10 @@ class NotificationBell extends StatelessWidget {
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
                   ),
-                  builder: (context) => const NotificationListModal(),
+                  builder: (context) => NotificationListModal(
+                    role: role,
+                    permissions: permissions,
+                  ),
                 );
               },
             ),

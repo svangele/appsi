@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'widgets/page_header.dart';
+import 'services/notification_service.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -327,6 +328,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     'new_permissions': permissions,
                                     'new_password': passwordController.text.trim().isEmpty ? null : passwordController.text.trim(),
                                   });
+
+                                  // Send notification if status is not ACTIVO
+                                  if (statusSys != 'ACTIVO') {
+                                    await NotificationService.send(
+                                      title: 'Estatus Sys: ${nombreController.text} ${paternoController.text}',
+                                      message: 'El colaborador ha sido marcado como $statusSys',
+                                      type: 'status_sys_alert',
+                                      metadata: {
+                                        'user_id': user['id'],
+                                        'status': statusSys,
+                                      },
+                                    );
+                                  }
                                 } else if (isGrantingAccess) {
                                   // Grant access to an existing profile
                                   await Supabase.instance.client.rpc('create_user_admin', params: {
@@ -377,6 +391,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       'otro_pass': otroPass.text.trim(),
                                       'status_sys': statusSys,
                                     }).eq('id', userId);
+
+                                    // Send notification if status is not ACTIVO
+                                    if (statusSys != 'ACTIVO') {
+                                      await NotificationService.send(
+                                        title: 'Estatus Sys: ${nombreController.text} ${paternoController.text}',
+                                        message: 'Nuevo colaborador creado con estatus $statusSys',
+                                        type: 'status_sys_alert',
+                                        metadata: {
+                                          'user_id': userId,
+                                          'status': statusSys,
+                                        },
+                                      );
+                                    }
                                   }
                                 }
                                 if (mounted) {

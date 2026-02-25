@@ -103,7 +103,7 @@ class _MainNavigationState extends State<MainNavigation> {
       appBar: AppBar(
         title: Text(pages[_selectedIndex]['title']),
         actions: [
-          const NotificationBell(),
+          NotificationBell(role: widget.role, permissions: widget.permissions),
         ],
       ),
       body: pages[_selectedIndex]['widget'],
