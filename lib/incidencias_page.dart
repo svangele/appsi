@@ -15,6 +15,8 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
   bool _isLoading = true;
   String? _userRole;
   String? _userFullName;
+  DateTime? _fechaIngreso;
+  DateTime? _fechaReingreso;
 
   @override
   void initState() {
@@ -30,7 +32,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
       // Fetch role and name
       final profile = await Supabase.instance.client
           .from('profiles')
-          .select('role, nombre, paterno, materno')
+          .select('role, nombre, paterno, materno, fecha_ingreso, fecha_reingreso')
           .eq('id', user.id)
           .maybeSingle();
 
@@ -43,6 +45,12 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
           setState(() {
             _userRole = profile['role'];
             _userFullName = fullName;
+            _fechaIngreso = profile['fecha_ingreso'] != null
+                ? DateTime.tryParse(profile['fecha_ingreso'])
+                : null;
+            _fechaReingreso = profile['fecha_reingreso'] != null
+                ? DateTime.tryParse(profile['fecha_reingreso'])
+                : null;
           });
         }
       }
@@ -50,6 +58,56 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
     } catch (e) {
       debugPrint('Error fetching profile: $e');
     }
+  }
+
+  /// Calcula la antigüedad a partir de la fecha efectiva (reingreso si existe, sino ingreso)
+  String _calcAntiguedad() {
+    final base = _fechaReingreso ?? _fechaIngreso;
+    if (base == null) return 'Sin fecha registrada';
+    final now = DateTime.now();
+    int years = now.year - base.year;
+    int months = now.month - base.month;
+    int days = now.day - base.day;
+    if (days < 0) { months--; }
+    if (months < 0) { years--; months += 12; }
+    final parts = <String>[];
+    if (years > 0) parts.add('$years año${years > 1 ? 's' : ''}');
+    if (months > 0) parts.add('$months mes${months > 1 ? 'es' : ''}');
+    if (parts.isEmpty) parts.add('Menos de un mes');
+    return parts.join(' y ');
+  }
+
+  /// Tarjeta de antigüedad
+  Widget _buildAntiguedadCard() {
+    final base = _fechaReingreso ?? _fechaIngreso;
+    if (base == null) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final label = _fechaReingreso != null ? 'Antigüedad (Reingreso)' : 'Antigüedad';
+    final dateStr = '${base.day.toString().padLeft(2, '0')}/${base.month.toString().padLeft(2, '0')}/${base.year}';
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.secondary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.secondary.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.workspace_premium_outlined, color: theme.colorScheme.secondary, size: 28),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              Text(_calcAntiguedad(),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.secondary)),
+              Text('Desde: $dateStr', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _fetchIncidencias() async {
@@ -263,6 +321,7 @@ class _IncidenciasPageState extends State<IncidenciasPage> {
             title: 'Incidencias y Peticiones',
             subtitle: 'Total: ${_incidencias.length} registros',
           ),
+          _buildAntiguedadCard(),
           Expanded(
             child: _isLoading 
               ? const Center(child: CircularProgressIndicator())
