@@ -31,7 +31,7 @@ class _SocialPageState extends State<SocialPage> {
       // Obtenemos todos los colaboradores que tengan fecha de nacimiento
       final data = await Supabase.instance.client
           .from('cssi_contributors')
-          .select('nombre, paterno, materno, fecha_nacimiento, foto_url')
+          .select('nombre, paterno, materno, fecha_nacimiento, foto_url, ubicacion')
           .not('fecha_nacimiento', 'is', null)
           .order('nombre');
 
@@ -160,62 +160,70 @@ class _SocialPageState extends State<SocialPage> {
         final isToday = date.day == DateTime.now().day && date.month == DateTime.now().month;
 
         return Card(
-          elevation: isToday ? 4 : 1,
+          elevation: 1,
           margin: const EdgeInsets.only(bottom: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: isToday ? BorderSide(color: theme.colorScheme.secondary, width: 2) : BorderSide.none,
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            contentPadding: const EdgeInsets.all(12),
             leading: Stack(
               children: [
                 CircleAvatar(
-                  radius: 25,
+                  radius: 28,
                   backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
                   backgroundImage: item['foto_url'] != null ? NetworkImage(item['foto_url']) : null,
                   child: item['foto_url'] == null 
-                    ? Icon(Icons.person, color: theme.colorScheme.primary)
+                    ? Icon(Icons.person, color: theme.colorScheme.primary, size: 30)
                     : null,
                 ),
                 if (isToday)
                   Positioned(
-                    right: -2,
-                    top: -2,
-                    child: Transform.rotate(
-                      angle: -0.2,
-                      child: const Text('👑', style: TextStyle(fontSize: 16)),
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                      child: const Text('👑', style: TextStyle(fontSize: 14)),
                     ),
                   ),
               ],
             ),
             title: Text(
               '${item['nombre']} ${item['paterno']}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            subtitle: Text(
-              '${date.day} de ${_months[date.month - 1].toLowerCase()}',
-              style: TextStyle(color: isToday ? theme.colorScheme.secondary : Colors.grey[600], fontWeight: isToday ? FontWeight.bold : FontWeight.normal),
-            ),
-            trailing: isToday 
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.cake, color: Colors.orange),
-                    Text('HOY!', style: TextStyle(color: Colors.orange, fontSize: 10, fontWeight: FontWeight.bold)),
-                  ],
-                )
-              : Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    shape: BoxShape.circle,
-                  ),
+            subtitle: Row(
+              children: [
+                const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
+                Expanded(
                   child: Text(
-                    '${date.day}',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+                    item['ubicacion'] ?? 'SIN UBICACIÓN',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+              ],
+            ),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '${date.day}',
+                  style: TextStyle(
+                    fontSize: 22, 
+                    fontWeight: FontWeight.bold, 
+                    color: isToday ? Colors.orange : theme.colorScheme.primary
+                  ),
+                ),
+                if (isToday)
+                  const Text(
+                    'HOY',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.orange),
+                  ),
+              ],
+            ),
           ),
         );
       },
