@@ -103,7 +103,11 @@ class _MainNavigationState extends State<MainNavigation> {
       appBar: AppBar(
         title: Text(pages[_selectedIndex]['title']),
         actions: [
-          NotificationBell(role: widget.role, permissions: widget.permissions),
+          NotificationBell(
+            role: widget.role,
+            permissions: widget.permissions,
+            currentUserId: Supabase.instance.client.auth.currentUser?.id ?? '',
+          ),
         ],
       ),
       body: pages[_selectedIndex]['widget'],

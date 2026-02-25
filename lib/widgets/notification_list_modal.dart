@@ -4,11 +4,13 @@ import '../services/notification_service.dart';
 class NotificationListModal extends StatefulWidget {
   final String role;
   final Map<String, dynamic> permissions;
+  final String currentUserId;
 
   const NotificationListModal({
     super.key,
     required this.role,
     required this.permissions,
+    required this.currentUserId,
   });
 
   @override
@@ -30,11 +32,14 @@ class _NotificationListModalState extends State<NotificationListModal> {
     try {
       final data = await NotificationService.fetchRecent();
       setState(() {
-        // Filter notifications based on role
+        // Filter notifications based on role, permissions, and user
         _notifications = data.where((n) {
           final type = n['type'] as String? ?? '';
           if (type == 'collaborator_alert' || type == 'status_sys_alert') {
             return widget.role == 'admin' && widget.permissions['show_users'] == true;
+          }
+          if (type == 'incidencia_status') {
+            return n['user_id'] == widget.currentUserId;
           }
           return true;
         }).toList();

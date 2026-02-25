@@ -5,11 +5,13 @@ import 'notification_list_modal.dart';
 class NotificationBell extends StatelessWidget {
   final String role;
   final Map<String, dynamic> permissions;
+  final String currentUserId;
 
   const NotificationBell({
     super.key,
     required this.role,
     required this.permissions,
+    required this.currentUserId,
   });
 
   @override
@@ -25,6 +27,9 @@ class NotificationBell extends StatelessWidget {
           final type = n['type'] as String? ?? '';
           if (type == 'collaborator_alert' || type == 'status_sys_alert') {
             return role == 'admin' && permissions['show_users'] == true;
+          }
+          if (type == 'incidencia_status') {
+            return n['user_id'] == currentUserId;
           }
           return true;
         }).length;
@@ -45,6 +50,7 @@ class NotificationBell extends StatelessWidget {
                   builder: (context) => NotificationListModal(
                     role: role,
                     permissions: permissions,
+                    currentUserId: currentUserId,
                   ),
                 );
               },
