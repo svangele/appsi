@@ -131,7 +131,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void _showUserForm({Map<String, dynamic>? user}) {
     final isEditing = user != null;
     final theme = Theme.of(context);
-    final nameController = TextEditingController(text: user?['full_name']);
+    final nombreController = TextEditingController(text: user?['nombre']);
+    final paternoController = TextEditingController(text: user?['paterno']);
+    final maternoController = TextEditingController(text: user?['materno']);
     final employeeNumberController = TextEditingController(text: user?['numero_empleado']);
     final emailController = TextEditingController(text: user?['email']);
     final passwordController = TextEditingController();
@@ -217,14 +219,35 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         const SizedBox(height: 16),
                       ],
                     TextField(
-                      controller: nameController,
-                      decoration: const InputDecoration(labelText: 'Nombre Completo', prefixIcon: Icon(Icons.person)),
+                      controller: nombreController,
+                      decoration: const InputDecoration(labelText: 'Nombre(s)', prefixIcon: Icon(Icons.person), filled: true),
+                      readOnly: true,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: paternoController,
+                            decoration: const InputDecoration(labelText: 'Paterno', prefixIcon: Icon(Icons.person_outline), filled: true),
+                            readOnly: true,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextField(
+                            controller: maternoController,
+                            decoration: const InputDecoration(labelText: 'Materno', prefixIcon: Icon(Icons.person_outline), filled: true),
+                            readOnly: true,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: employeeNumberController,
-                      decoration: const InputDecoration(labelText: 'Número de Empleado', prefixIcon: Icon(Icons.badge_outlined)),
-                      readOnly: true, // Only filled via collaborator selection
+                      decoration: const InputDecoration(labelText: 'Número de Empleado', prefixIcon: Icon(Icons.badge_outlined), filled: true),
+                      readOnly: true, 
                     ),
                     const SizedBox(height: 16),
                     // Removed link logic as it is now one single table
@@ -299,16 +322,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   await Supabase.instance.client.rpc('update_user_admin', params: {
                                     'user_id_param': user['id'],
                                     'new_email': emailController.text.trim(),
-                                    'new_full_name': nameController.text.trim(),
+                                    'new_full_name': '${nombreController.text} ${paternoController.text} ${maternoController.text}'.trim(),
                                     'new_role': role,
                                     'new_status_sys': statusSys,
+                                    'is_blocked_param': isBlocked,
+                                    'new_permissions': permissions,
                                   });
                                 } else {
                                   // 1. Create the user via RPC
                                   final response = await Supabase.instance.client.rpc('create_user_admin', params: {
                                     'email': emailController.text.trim(),
                                     'password': passwordController.text.trim(),
-                                    'full_name': nameController.text.trim(),
+                                    'full_name': '${nombreController.text} ${paternoController.text} ${maternoController.text}'.trim(),
                                     'user_role': role,
                                   });
 
@@ -427,10 +452,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
     if (_searchQuery.isEmpty) return _users;
     final query = _searchQuery.toLowerCase();
     return _users.where((user) {
-      final name = (user['full_name'] ?? '').toString().toLowerCase();
+      final nombre = (user['nombre'] ?? '').toString().toLowerCase();
+      final paterno = (user['paterno'] ?? '').toString().toLowerCase();
+      final materno = (user['materno'] ?? '').toString().toLowerCase();
+      final fullName = (user['full_name'] ?? '').toString().toLowerCase();
       final role = (user['role'] ?? '').toString().toLowerCase();
       final numEmp = (user['numero_empleado'] ?? '').toString().toLowerCase();
-      return name.contains(query) || role.contains(query) || numEmp.contains(query);
+      return nombre.contains(query) || paterno.contains(query) || materno.contains(query) || 
+             fullName.contains(query) || role.contains(query) || numEmp.contains(query);
     }).toList();
   }
 
@@ -568,7 +597,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               ),
                             ),
                             title: Text(
-                              '${user['numero_empleado'] != null ? '${user['numero_empleado']} | ' : ''}${user['full_name'] ?? 'Usuario sin nombre'}',
+                              '${user['numero_empleado'] ?? '----'} | ${user['nombre'] ?? ''} ${user['paterno'] ?? ''} ${user['materno'] ?? ''}'.trim(),
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 decoration: (user['is_blocked'] ?? false) ? TextDecoration.lineThrough : null,

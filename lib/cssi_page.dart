@@ -33,7 +33,7 @@ class _CssiPageState extends State<CssiPage> {
       final data = await Supabase.instance.client
           .from('profiles')
           .select()
-          .not('nombre', 'is', null)
+          .or('nombre.not.is.null,full_name.not.is.null')
           .order('created_at', ascending: false);
       if (mounted) {
         setState(() {

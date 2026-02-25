@@ -1,88 +1,82 @@
 -- =============================================================================
--- Unified Granular RLS Policies (Accesos)
+-- FIX: Funciones de Apoyo para RLS (Evitar Recursión y Errores de Lógica)
+-- =============================================================================
+
+-- Función para verificar permisos del visualizador de forma segura
+CREATE OR REPLACE FUNCTION public.check_viewer_permission(perm_key TEXT)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM public.profiles
+        WHERE id = auth.uid()
+        AND (
+            role = 'admin' 
+            OR (permissions->>perm_key)::boolean = true
+        )
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- =============================================================================
+-- ACTUALIZACIÓN DE POLÍTICAS RLS (Profiles)
 -- =============================================================================
 
 -- 1. PERFILES (profiles)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- Ver perfiles: Admin o con permiso show_users
+-- Ver perfiles: Yo mismo, o si tengo permiso de ver usuarios/cssi, o soy admin
 DROP POLICY IF EXISTS "Ver perfiles: permiso o admin" ON public.profiles;
 CREATE POLICY "Ver perfiles: permiso o admin"
   ON public.profiles
   FOR SELECT
   USING (
     id = auth.uid() OR
-    (permissions->>'show_users')::boolean = true OR
-    role = 'admin'
+    public.check_viewer_permission('show_users') OR
+    public.check_viewer_permission('show_cssi')
   );
 
--- Modificar perfiles: Solo Admins
+-- Modificar perfiles: Solo Admins (basado en el rol del QUE MODIFICA)
 DROP POLICY IF EXISTS "Modificar perfiles: solo admins" ON public.profiles;
 CREATE POLICY "Modificar perfiles: solo admins"
   ON public.profiles
   FOR UPDATE
-  USING (role = 'admin')
-  WITH CHECK (role = 'admin');
+  USING (
+    EXISTS (
+        SELECT 1 FROM public.profiles
+        WHERE id = auth.uid() AND role = 'admin'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM public.profiles
+        WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
 
--- 2. INVENTARIO ISSI (issi_inventory)
-ALTER TABLE public.issi_inventory ENABLE ROW LEVEL SECURITY;
+-- =============================================================================
+-- ACTUALIZACIÓN DE POLÍTICAS RLS (ISSI y Otros)
+-- =====================
 
 -- Ver ISSI: permiso o admin
 DROP POLICY IF EXISTS "Ver ISSI: permiso o admin" ON public.issi_inventory;
 CREATE POLICY "Ver ISSI: permiso o admin"
   ON public.issi_inventory
   FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles 
-      WHERE id = auth.uid() 
-      AND ((permissions->>'show_issi')::boolean = true OR role = 'admin')
-    )
-  );
+  USING ( public.check_viewer_permission('show_issi') );
 
--- Modificar ISSI: permiso o admin (ajustable si se prefiere solo admin)
+-- Modificar ISSI: permiso o admin
 DROP POLICY IF EXISTS "Modificar ISSI: permiso o admin" ON public.issi_inventory;
 CREATE POLICY "Modificar ISSI: permiso o admin"
   ON public.issi_inventory
   FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles 
-      WHERE id = auth.uid() 
-      AND ((permissions->>'show_issi')::boolean = true OR role = 'admin')
-    )
-  );
-
--- 3. COLABORADORES CSSI (cssi_contributors)
-ALTER TABLE public.cssi_contributors ENABLE ROW LEVEL SECURITY;
-
--- Ver/Modificar CSSI: permiso o admin
-DROP POLICY IF EXISTS "Acceso CSSI: permiso o admin" ON public.cssi_contributors;
-CREATE POLICY "Acceso CSSI: permiso o admin"
-  ON public.cssi_contributors
-  FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles 
-      WHERE id = auth.uid() 
-      AND ((permissions->>'show_cssi')::boolean = true OR role = 'admin')
-    )
-  );
-
--- 4. LOGS DEL SISTEMA (system_logs)
-ALTER TABLE public.system_logs ENABLE ROW LEVEL SECURITY;
+  USING ( public.check_viewer_permission('show_issi') );
 
 -- Ver logs: permiso o admin
 DROP POLICY IF EXISTS "Ver logs: permiso o admin" ON public.system_logs;
 CREATE POLICY "Ver logs: permiso o admin"
   ON public.system_logs
   FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles 
-      WHERE id = auth.uid() 
-      AND ((permissions->>'show_logs')::boolean = true OR role = 'admin')
-    )
-  );
+  USING ( public.check_viewer_permission('show_logs') );
 
+-- Notificar recarga de esquema
 NOTIFY pgrst, 'reload schema';
