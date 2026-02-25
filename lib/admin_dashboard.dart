@@ -221,8 +221,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         obscureText: true,
                       ),
                       const SizedBox(height: 16),
-                    const SizedBox(height: 16),
-                    // Removed link logic as it is now one single table
+                      // Removed link logic as it is now one single table
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       value: role,
@@ -302,7 +301,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                 return;
                               }
                               try {
-                                if (isEditing && !isGrantingAccess) {
                                 if (isEditing && !isGrantingAccess) {
                                   await Supabase.instance.client.rpc('update_user_admin', params: {
                                     'user_id_param': user['id'],
