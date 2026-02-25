@@ -304,7 +304,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                     'new_status_sys': statusSys,
                                   });
 
-,ReplacementContent:                                } else {
+                                } else {
                                   // 1. Create the user via RPC
                                   final response = await Supabase.instance.client.rpc('create_user_admin', params: {
                                     'email': emailController.text.trim(),
@@ -317,7 +317,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   if (userId != null) {
                                     // Update profile with extra data (collaborator + credentials)
                                     await Supabase.instance.client.from('profiles').update({
-,ReplacementContent:                                      'numero_empleado': employeeNumberController.text.trim(),
                                       'drp_user': drpUser.text.trim(),
                                       'drp_pass': drpPass.text.trim(),
                                       'gp_user': gpUser.text.trim(),
@@ -331,8 +330,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                       'status_sys': statusSys,
                                     }).eq('id', userId);
 
-,ReplacementContent:                                  }
-                                }
+                                  }
                                 if (mounted) {
                                   Navigator.pop(context);
                                   _fetchUsers();
