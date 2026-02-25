@@ -42,7 +42,15 @@ class _NotificationListModalState extends State<NotificationListModal> {
             return n['user_id'] == widget.currentUserId;
           }
           return true;
-        }).toList();
+        }).toList()
+          ..sort((a, b) {
+            // Unread (PENDIENTES) first
+            final aRead = a['is_read'] == true ? 1 : 0;
+            final bRead = b['is_read'] == true ? 1 : 0;
+            if (aRead != bRead) return aRead.compareTo(bRead);
+            // Then by newest first
+            return (b['created_at'] as String).compareTo(a['created_at'] as String);
+          });
         _isLoading = false;
       });
     } catch (e) {
